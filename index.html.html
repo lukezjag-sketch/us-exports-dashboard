@@ -1,0 +1,214 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.tab-btn { background: none; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--color-text-secondary); transition: all 0.15s; }
+.tab-btn.active { background: var(--color-background-secondary); color: var(--color-text-primary); border-color: var(--color-border-secondary); font-weight: 500; }
+.metric-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px 16px; }
+.metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.section-panel { display: none; }
+.section-panel.active { display: block; }
+.anomaly-high { background: #FAEEDA; color: #633806; border-radius: 4px; padding: 2px 7px; font-size: 11px; }
+.anomaly-low { background: #FCEBEB; color: #501313; border-radius: 4px; padding: 2px 7px; font-size: 11px; }
+.hhi-bar-fill { height: 8px; border-radius: 4px; transition: width 0.4s; }
+select { font-size: 13px; padding: 5px 8px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; }
+</style>
+
+<h2 class="sr-only">U.S. Export Data Dashboard — 2024, covering 21 industry sections, $1.896 trillion total exports, with HHI concentration scores and mega-region analysis</h2>
+
+<div style="padding: 1rem 0 0.5rem;">
+  <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px;">
+    <span style="font-size: 18px; font-weight: 500; color: var(--color-text-primary);">U.S. export analysis</span>
+    <span style="font-size: 13px; color: var(--color-text-secondary);">2024 · 21 sectors · 1,222 products</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+    <div class="metric-card"><div class="metric-label">Total exports</div><div class="metric-value">$1.90T</div></div>
+    <div class="metric-card"><div class="metric-label">Top sector</div><div class="metric-value" style="font-size: 16px; padding-top: 4px;">Machines</div></div>
+    <div class="metric-card"><div class="metric-label">Most concentrated</div><div class="metric-value" style="font-size: 15px; padding-top: 4px;">Mineral Products</div></div>
+    <div class="metric-card"><div class="metric-label">Most diversified</div><div class="metric-value" style="font-size: 15px; padding-top: 4px;">Stone & Glass</div></div>
+  </div>
+
+  <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+    <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
+    <button class="tab-btn" onclick="switchTab('hhi')">HHI concentration</button>
+    <button class="tab-btn" onclick="switchTab('deepdive')">Industry deep-dive</button>
+    <button class="tab-btn" onclick="switchTab('megaregions')">Mega-regions</button>
+    <button class="tab-btn" onclick="switchTab('anomalies')">Anomaly flags</button>
+  </div>
+
+  <div id="tab-overview" class="section-panel active">
+    <div style="position: relative; width: 100%; height: 360px;">
+      <canvas id="overviewChart" role="img" aria-label="Horizontal bar chart of U.S. exports by sector, Machines leads at $451B, followed by Mineral Products at $365B">Top sectors by total exports in USD billions.</canvas>
+    </div>
+    <div id="overviewLegend" style="display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; font-size:12px; color:var(--color-text-secondary);"></div>
+  </div>
+
+  <div id="tab-hhi" class="section-panel">
+    <div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 14px;">HHI (Herfindahl-Hirschman Index) measures export concentration within each sector. Higher = fewer products dominate. HHI &gt; 25 = highly concentrated.</div>
+    <div id="hhiList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+  </div>
+
+  <div id="tab-deepdive" class="section-panel">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+      <label style="font-size: 13px; color: var(--color-text-secondary);">Sector:</label>
+      <select id="sectorSelect" onchange="renderDeepDive()"></select>
+    </div>
+    <div id="deepDiveContent"></div>
+    <div style="position: relative; width: 100%; height: 260px; margin-top: 16px;">
+      <canvas id="deepDiveChart" role="img" aria-label="Top 5 products in selected sector by export value"></canvas>
+    </div>
+  </div>
+
+  <div id="tab-megaregions" class="section-panel">
+    <div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 14px;">Estimated export relevance by mega-region based on known industry clusters and population data. Click a region to explore further.</div>
+    <div id="megaregionGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;"></div>
+  </div>
+
+  <div id="tab-anomalies" class="section-panel">
+    <div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 14px;">Products flagged as dominant (5× sector median share) or near-zero exporters (&lt;0.001% total share).</div>
+    <div id="anomalyList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const DATA = [{"Section":"Machines","Exports (USD)":451939627898,"share":23.831,"HHI":25.31,"top_products":[{"HS4":"Gas Turbines","Exports (USD)":52206728830,"Share (%)":2.753},{"HS4":"Integrated Circuits","Exports (USD)":48243000200,"Share (%)":2.544},{"HS4":"Computers","Exports (USD)":32120005540,"Share (%)":1.694},{"HS4":"Telephones","Exports (USD)":27580035067,"Share (%)":1.454},{"HS4":"Semiconductor Mfg Apparatus","Exports (USD)":19637070422,"Share (%)":1.035}],"anomalies":{"high":[{"HS4":"Gas Turbines","Share (%)":2.753},{"HS4":"Integrated Circuits","Share (%)":2.544},{"HS4":"Computers","Share (%)":1.694}],"low":[{"HS4":"Felt Machinery","Share (%)":0}]}},{"Section":"Mineral Products","Exports (USD)":365352642506,"share":19.265,"HHI":100.5,"top_products":[{"HS4":"Crude Petroleum","Exports (USD)":123931537349,"Share (%)":6.535},{"HS4":"Refined Petroleum","Exports (USD)":114977376641,"Share (%)":6.063},{"HS4":"Petroleum Gas","Exports (USD)":84774161827,"Share (%)":4.47},{"HS4":"Coal & Solid Fuels","Exports (USD)":17796042375,"Share (%)":0.938},{"HS4":"Petroleum Coke","Exports (USD)":5554361088,"Share (%)":0.293}],"anomalies":{"high":[{"HS4":"Crude Petroleum","Share (%)":6.535},{"HS4":"Refined Petroleum","Share (%)":6.063},{"HS4":"Petroleum Gas","Share (%)":4.47}],"low":[{"HS4":"Iron Pyrites","Share (%)":0},{"HS4":"Chalk","Share (%)":0},{"HS4":"Calcium Phosphates","Share (%)":0}]}},{"Section":"Chemical Products","Exports (USD)":246610916241,"share":13.004,"HHI":13.14,"top_products":[{"HS4":"Vaccines & Blood Products","Exports (USD)":51320746525,"Share (%)":2.706},{"HS4":"Packaged Medicaments","Exports (USD)":38430172591,"Share (%)":2.026},{"HS4":"Laboratory Reagents","Exports (USD)":12092439712,"Share (%)":0.638},{"HS4":"Hormones","Exports (USD)":9351020184,"Share (%)":0.493},{"HS4":"Acyclic Hydrocarbons","Exports (USD)":8564422507,"Share (%)":0.452}],"anomalies":{"high":[{"HS4":"Vaccines & Blood Products","Share (%)":2.706},{"HS4":"Packaged Medicaments","Share (%)":2.026}],"low":[{"HS4":"Sulfur","Share (%)":0},{"HS4":"Cobalt Oxides","Share (%)":0}]}},{"Section":"Transportation","Exports (USD)":208545020612,"share":10.996,"HHI":22.18,"top_products":[{"HS4":"Cars","Exports (USD)":62428025866,"Share (%)":3.292},{"HS4":"Auto Parts","Exports (USD)":41958644869,"Share (%)":2.212},{"HS4":"Planes & Spacecraft","Exports (USD)":34035384621,"Share (%)":1.795},{"HS4":"Aircraft Parts","Exports (USD)":25152104126,"Share (%)":1.326},{"HS4":"Delivery Trucks","Exports (USD)":21449778230,"Share (%)":1.131}],"anomalies":{"high":[{"HS4":"Cars","Share (%)":3.292},{"HS4":"Auto Parts","Share (%)":2.212},{"HS4":"Planes & Spacecraft","Share (%)":1.795}],"low":[{"HS4":"Electric Locomotives","Share (%)":0},{"HS4":"Fishing Ships","Share (%)":0}]}},{"Section":"Instruments","Exports (USD)":110243360252,"share":5.813,"HHI":5.09,"top_products":[{"HS4":"Medical Instruments","Exports (USD)":35776705781,"Share (%)":1.886},{"HS4":"Orthopedic Appliances","Exports (USD)":14902953592,"Share (%)":0.786},{"HS4":"Chemical Analysis Instruments","Exports (USD)":11456902457,"Share (%)":0.604},{"HS4":"Other Measuring Instruments","Exports (USD)":8791277924,"Share (%)":0.464},{"HS4":"Oscilloscopes","Exports (USD)":5424045585,"Share (%)":0.286}],"anomalies":{"high":[{"HS4":"Medical Instruments","Share (%)":1.886}],"low":[{"HS4":"Clock Movements","Share (%)":0}]}},{"Section":"Plastics and Rubbers","Exports (USD)":93986586231,"share":4.956,"HHI":1.71,"top_products":[{"HS4":"Ethylene Polymers","Exports (USD)":16507947534,"Share (%)":0.87},{"HS4":"Other Plastic Products","Exports (USD)":9200079541,"Share (%)":0.485},{"HS4":"Plastic Lids","Exports (USD)":6750831431,"Share (%)":0.356},{"HS4":"Polyacetals","Exports (USD)":5911302791,"Share (%)":0.312},{"HS4":"Raw Plastic Sheeting","Exports (USD)":5551257249,"Share (%)":0.293}],"anomalies":{"high":[{"HS4":"Ethylene Polymers","Share (%)":0.87}],"low":[{"HS4":"Rubber Thread","Share (%)":0}]}},{"Section":"Metals","Exports (USD)":87094547407,"share":4.592,"HHI":0.64,"top_products":[{"HS4":"Other Iron Products","Exports (USD)":6540150881,"Share (%)":0.345},{"HS4":"Scrap Iron","Exports (USD)":6325751087,"Share (%)":0.334},{"HS4":"Iron Fasteners","Exports (USD)":5609526215,"Share (%)":0.296},{"HS4":"Scrap Copper","Exports (USD)":5440246055,"Share (%)":0.287},{"HS4":"Scrap Aluminium","Exports (USD)":3623272021,"Share (%)":0.191}],"anomalies":{"high":[{"HS4":"Other Iron Products","Share (%)":0.345}],"low":[{"HS4":"Pig Iron","Share (%)":0},{"HS4":"Barbed Wire","Share (%)":0}]}},{"Section":"Vegetable Products","Exports (USD)":74552333634,"share":3.931,"HHI":2.41,"top_products":[{"HS4":"Soybeans","Exports (USD)":24481503976,"Share (%)":1.291},{"HS4":"Corn","Exports (USD)":10649913019,"Share (%)":0.562},{"HS4":"Other Nuts","Exports (USD)":9268424027,"Share (%)":0.489},{"HS4":"Wheat","Exports (USD)":6594612312,"Share (%)":0.348},{"HS4":"Rice","Exports (USD)":2526020122,"Share (%)":0.133}],"anomalies":{"high":[{"HS4":"Soybeans","Share (%)":1.291},{"HS4":"Corn","Share (%)":0.562}],"low":[{"HS4":"Citrus & Melon Peels","Share (%)":0},{"HS4":"Mate","Share (%)":0}]}},{"Section":"Foodstuffs","Exports (USD)":60635481326,"share":3.197,"HHI":0.6,"top_products":[{"HS4":"Other Edible Preparations","Exports (USD)":8477927198,"Share (%)":0.447},{"HS4":"Soybean Meal","Exports (USD)":6273583871,"Share (%)":0.331},{"HS4":"Alcohol >80% ABV","Exports (USD)":4522677675,"Share (%)":0.238},{"HS4":"Animal Food","Exports (USD)":4356160430,"Share (%)":0.23},{"HS4":"Starch Residue","Exports (USD)":3728770159,"Share (%)":0.197}],"anomalies":{"high":[{"HS4":"Other Edible Preparations","Share (%)":0.447}],"low":[{"HS4":"Tapioca","Share (%)":0},{"HS4":"Processed Mushrooms","Share (%)":0}]}},{"Section":"Precious Metals","Exports (USD)":53338762579,"share":2.813,"HHI":2.04,"top_products":[{"HS4":"Gold","Exports (USD)":23695750673,"Share (%)":1.249},{"HS4":"Jewellery","Exports (USD)":8272306029,"Share (%)":0.436},{"HS4":"Precious Metal Scraps","Exports (USD)":6830916205,"Share (%)":0.36},{"HS4":"Diamonds","Exports (USD)":6623151639,"Share (%)":0.349},{"HS4":"Platinum","Exports (USD)":3110596965,"Share (%)":0.164}],"anomalies":{"high":[{"HS4":"Gold","Share (%)":1.249}],"low":[{"HS4":"Gold Clad Metals","Share (%)":0}]}},{"Section":"Animal Products","Exports (USD)":36492291037,"share":1.924,"HHI":0.35,"top_products":[{"HS4":"Pig Meat","Exports (USD)":6503018133,"Share (%)":0.343},{"HS4":"Poultry Meat","Exports (USD)":4701224797,"Share (%)":0.248},{"HS4":"Frozen Bovine Meat","Exports (USD)":4630050820,"Share (%)":0.244},{"HS4":"Bovine Meat","Exports (USD)":4328623543,"Share (%)":0.228},{"HS4":"Cheese","Exports (USD)":2505524133,"Share (%)":0.132}],"anomalies":{"high":[{"HS4":"Pig Meat","Share (%)":0.343}],"low":[{"HS4":"Horse Meat","Share (%)":0}]}},{"Section":"Paper Goods","Exports (USD)":27654023729,"share":1.458,"HHI":0.18,"top_products":[{"HS4":"Sulfate Chemical Woodpulp","Exports (USD)":4801982382,"Share (%)":0.253},{"HS4":"Kraft Paper","Exports (USD)":3434741079,"Share (%)":0.181},{"HS4":"Recovered Paper","Exports (USD)":2599266961,"Share (%)":0.137},{"HS4":"Paper Containers","Exports (USD)":2237139586,"Share (%)":0.118},{"HS4":"Cellulose Fibers Paper","Exports (USD)":2083319000,"Share (%)":0.11}],"anomalies":{"high":[{"HS4":"Sulfate Woodpulp","Share (%)":0.253}],"low":[{"HS4":"Maps","Share (%)":0},{"HS4":"Architectural Plans","Share (%)":0}]}},{"Section":"Textiles","Exports (USD)":22133419877,"share":1.167,"HHI":0.09,"top_products":[{"HS4":"Raw Cotton","Exports (USD)":4664698930,"Share (%)":0.246},{"HS4":"Non-woven Textiles","Exports (USD)":1604728093,"Share (%)":0.085},{"HS4":"Artificial Filament Tow","Exports (USD)":871221325,"Share (%)":0.046},{"HS4":"Non-Retail Cotton Yarn","Exports (USD)":867162157,"Share (%)":0.046},{"HS4":"Used Clothing","Exports (USD)":853173272,"Share (%)":0.045}],"anomalies":{"high":[{"HS4":"Raw Cotton","Share (%)":0.246}],"low":[{"HS4":"Raw Silk","Share (%)":0}]}},{"Section":"Miscellaneous","Exports (USD)":15611121047,"share":0.823,"HHI":0.08,"top_products":[{"HS4":"Seats","Exports (USD)":3654467193,"Share (%)":0.193},{"HS4":"Other Furniture","Exports (USD)":1988468390,"Share (%)":0.105},{"HS4":"Video & Card Games","Exports (USD)":1855021133,"Share (%)":0.098},{"HS4":"Sports Equipment","Exports (USD)":1728111710,"Share (%)":0.091},{"HS4":"Light Fixtures","Exports (USD)":1252251400,"Share (%)":0.066}],"anomalies":{"high":[{"HS4":"Seats","Share (%)":0.193}],"low":[{"HS4":"Hand Sifters","Share (%)":0}]}},{"Section":"Stone And Glass","Exports (USD)":12523326481,"share":0.66,"HHI":0.03,"top_products":[{"HS4":"Glass Mirrors","Exports (USD)":1741254307,"Share (%)":0.092},{"HS4":"Other Stone Articles","Exports (USD)":1564345533,"Share (%)":0.082},{"HS4":"Glass Fibers","Exports (USD)":1512768276,"Share (%)":0.08},{"HS4":"Laboratory Ceramic Ware","Exports (USD)":1059042706,"Share (%)":0.056},{"HS4":"Abrasive Powder","Exports (USD)":641782699,"Share (%)":0.034}],"anomalies":{"high":[{"HS4":"Glass Mirrors","Share (%)":0.092}],"low":[{"HS4":"Asbestos Fibres","Share (%)":0}]}},{"Section":"Wood Products","Exports (USD)":9953803397,"share":0.525,"HHI":0.05,"top_products":[{"HS4":"Sawn Wood","Exports (USD)":2668817301,"Share (%)":0.141},{"HS4":"Fuel Wood","Exports (USD)":2563857815,"Share (%)":0.135},{"HS4":"Rough Wood","Exports (USD)":1795518149,"Share (%)":0.095},{"HS4":"Wood Carpentry","Exports (USD)":546989185,"Share (%)":0.029},{"HS4":"Wood Barrels","Exports (USD)":472697421,"Share (%)":0.025}],"anomalies":{"high":[{"HS4":"Sawn Wood","Share (%)":0.141}],"low":[{"HS4":"Raw Cork","Share (%)":0}]}},{"Section":"Arts and Antiques","Exports (USD)":6741333566,"share":0.355,"HHI":0.07,"top_products":[{"HS4":"Paintings","Exports (USD)":4895733313,"Share (%)":0.258},{"HS4":"Sculptures","Exports (USD)":950994599,"Share (%)":0.05},{"HS4":"Antiques","Exports (USD)":355165749,"Share (%)":0.019},{"HS4":"Collector's Items","Exports (USD)":352094152,"Share (%)":0.019},{"HS4":"Prints","Exports (USD)":174122323,"Share (%)":0.009}],"anomalies":{"high":[{"HS4":"Paintings","Share (%)":0.258}],"low":[]}},{"Section":"Weapons","Exports (USD)":5894801098,"share":0.311,"HHI":0.05,"top_products":[{"HS4":"Explosive Ammunition","Exports (USD)":4250148488,"Share (%)":0.224},{"HS4":"Military Weapons","Exports (USD)":643560462,"Share (%)":0.034},{"HS4":"Weapons Parts","Exports (USD)":621571259,"Share (%)":0.033},{"HS4":"Other Firearms","Exports (USD)":150493847,"Share (%)":0.008},{"HS4":"Handguns","Exports (USD)":141010114,"Share (%)":0.007}],"anomalies":{"high":[{"HS4":"Explosive Ammunition","Share (%)":0.224}],"low":[{"HS4":"Bladed Weapons","Share (%)":0}]}},{"Section":"Animal and Vegetable Bi-Products","Exports (USD)":2727787744,"share":0.144,"HHI":0,"top_products":[{"HS4":"Other Vegetable Oils","Exports (USD)":503013956,"Share (%)":0.027},{"HS4":"Soybean Oil","Exports (USD)":482083092,"Share (%)":0.025},{"HS4":"Margarine","Exports (USD)":392387115,"Share (%)":0.021},{"HS4":"Fish Oil","Exports (USD)":311143221,"Share (%)":0.016},{"HS4":"Animal Fat","Exports (USD)":235123365,"Share (%)":0.012}],"anomalies":{"high":[{"HS4":"Other Vegetable Oils","Share (%)":0.027}],"low":[{"HS4":"Olive Oil","Share (%)":0}]}},{"Section":"Animal Hides","Exports (USD)":2642131544,"share":0.139,"HHI":0,"top_products":[{"HS4":"Trunks and Cases","Exports (USD)":910635125,"Share (%)":0.048},{"HS4":"Equine & Bovine Hides","Exports (USD)":660976910,"Share (%)":0.035},{"HS4":"Tanned Hides","Exports (USD)":475714328,"Share (%)":0.025},{"HS4":"Other Hides","Exports (USD)":151397250,"Share (%)":0.008},{"HS4":"Leather of Other Animals","Exports (USD)":121001798,"Share (%)":0.006}],"anomalies":{"high":[{"HS4":"Trunks and Cases","Share (%)":0.048}],"low":[{"HS4":"Sheep Hides","Share (%)":0}]}},{"Section":"Footwear and Headwear","Exports (USD)":1799855796,"share":0.095,"HHI":0,"top_products":[{"HS4":"Footwear Parts","Exports (USD)":352573020,"Share (%)":0.019},{"HS4":"Leather Footwear","Exports (USD)":344023493,"Share (%)":0.018},{"HS4":"Other Headwear","Exports (USD)":255078164,"Share (%)":0.013},{"HS4":"Textile Footwear","Exports (USD)":213827067,"Share (%)":0.011},{"HS4":"Other Footwear","Exports (USD)":143773598,"Share (%)":0.008}],"anomalies":{"high":[{"HS4":"Footwear Parts","Share (%)":0.019}],"low":[{"HS4":"Hat Forms","Share (%)":0}]}}];
+
+const MEGA_REGIONS = [
+  {name:"Northeast Corridor",pop:"56m",cities:"Boston · New York · DC · Philadelphia",sectors:["Machines","Chemical Products","Instruments","Precious Metals","Arts and Antiques"],note:"Finance, pharma, biotech, and high-tech manufacturing hub"},
+  {name:"Great Lakes",pop:"90m",cities:"Chicago · Detroit · Cleveland · Toronto",sectors:["Transportation","Metals","Machines","Plastics and Rubbers"],note:"Auto manufacturing, steel, industrial machinery corridor"},
+  {name:"Texas Triangle",pop:"25m",cities:"DFW · Houston · Austin · San Antonio",sectors:["Mineral Products","Chemical Products","Machines","Transportation"],note:"Energy supercenter — crude, refined petroleum, gas dominate"},
+  {name:"Southern California",pop:"25m",cities:"LA · San Diego-Tijuana",sectors:["Transportation","Instruments","Miscellaneous","Footwear and Headwear"],note:"Aerospace, defense, entertainment, and port-driven trade"},
+  {name:"Piedmont Atlantic",pop:"31m",cities:"Atlanta · Charlotte · Nashville · Memphis",sectors:["Transportation","Machines","Textiles","Foodstuffs"],note:"Logistics, auto plants (BMW, Volvo, Mercedes), textile legacy"},
+  {name:"Cascadia",pop:"19.2m",cities:"Seattle · Portland · Vancouver",sectors:["Transportation","Wood Products","Machines","Vegetable Products"],note:"Boeing, timber, tech — aerospace and wood products anchor"},
+  {name:"Northern California",pop:"12.7m",cities:"Bay Area · Sacramento",sectors:["Machines","Instruments","Chemical Products","Vegetable Products"],note:"Silicon Valley tech exports, biotech, ag from Central Valley"},
+  {name:"Gulf Coast",pop:"16m",cities:"Houston · New Orleans",sectors:["Mineral Products","Chemical Products","Animal Products"],note:"Largest US energy export corridor; petrochemical complexes"},
+  {name:"Florida",pop:"21.5m",cities:"Miami · Orlando · Tampa",sectors:["Arts and Antiques","Precious Metals","Instruments","Foodstuffs"],note:"Finance, trade re-export hub for Latin America"},
+  {name:"Front Range",pop:"7m",cities:"Denver · Santa Fe · Albuquerque",sectors:["Mineral Products","Machines","Instruments"],note:"Energy, aerospace, and emerging tech manufacturing"},
+];
+
+const COLORS = ['#185FA5','#0F6E56','#3266ad','#B87333','#639922','#993556','#633806','#3C3489','#851414','#555550','#185F85','#3B6D11'];
+
+let overviewChart = null;
+let deepChart = null;
+
+function fmt(v) {
+  if(v >= 1e12) return '$' + (v/1e12).toFixed(2) + 'T';
+  if(v >= 1e9) return '$' + (v/1e9).toFixed(1) + 'B';
+  if(v >= 1e6) return '$' + (v/1e6).toFixed(0) + 'M';
+  return '$' + v.toLocaleString();
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+  if(id === 'overview' && !overviewChart) renderOverview();
+  if(id === 'hhi') renderHHI();
+  if(id === 'deepdive') renderDeepDive();
+  if(id === 'megaregions') renderMegaRegions();
+  if(id === 'anomalies') renderAnomalies();
+}
+
+function renderOverview() {
+  const sorted = [...DATA].sort((a,b) => b['Exports (USD)'] - a['Exports (USD)']);
+  const labels = sorted.map(d => d.Section.length > 22 ? d.Section.slice(0,20)+'…' : d.Section);
+  const values = sorted.map(d => +(d['Exports (USD)'] / 1e9).toFixed(1));
+  const bgColors = sorted.map((_, i) => COLORS[i % COLORS.length]);
+  const legend = document.getElementById('overviewLegend');
+  legend.innerHTML = sorted.map((d,i) => `<span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:${COLORS[i%COLORS.length]};flex-shrink:0;"></span><span>${d.Section} ${d.share.toFixed(1)}%</span></span>`).join('');
+  overviewChart = new Chart(document.getElementById('overviewChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: bgColors, borderWidth: 0 }] },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' $' + ctx.raw + 'B (' + sorted[ctx.dataIndex].share + '%)' } } },
+      scales: { x: { grid: { color: 'rgba(128,128,128,0.1)' }, ticks: { callback: v => '$' + v + 'B', font: { size: 11 } } }, y: { ticks: { font: { size: 11 } } } }
+    }
+  });
+}
+
+function renderHHI() {
+  const sorted = [...DATA].sort((a,b) => b.HHI - a.HHI);
+  const maxHHI = sorted[0].HHI;
+  const el = document.getElementById('hhiList');
+  el.innerHTML = sorted.map(d => {
+    const pct = Math.min(100, (d.HHI / maxHHI) * 100);
+    const isHigh = d.HHI > 25;
+    const isMed = d.HHI > 5 && d.HHI <= 25;
+    const color = isHigh ? '#A32D2D' : isMed ? '#854F0B' : '#185FA5';
+    const label = isHigh ? 'highly concentrated' : isMed ? 'moderate' : 'diversified';
+    return `<div style="display:grid;grid-template-columns:180px 1fr 60px 120px;gap:10px;align-items:center;">
+      <span style="font-size:12px;color:var(--color-text-primary);font-weight:500;">${d.Section.length > 22 ? d.Section.slice(0,20)+'…' : d.Section}</span>
+      <div style="background:var(--color-background-secondary);border-radius:4px;height:8px;overflow:hidden;">
+        <div class="hhi-bar-fill" style="width:${pct.toFixed(1)}%;background:${color};"></div>
+      </div>
+      <span style="font-size:12px;font-weight:500;color:${color};">${d.HHI.toFixed(1)}</span>
+      <span style="font-size:11px;color:var(--color-text-secondary);">${label}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderDeepDive() {
+  const sel = document.getElementById('sectorSelect');
+  if(!sel.options.length) {
+    DATA.forEach(d => { const o = document.createElement('option'); o.value = d.Section; o.textContent = d.Section; sel.appendChild(o); });
+  }
+  const section = DATA.find(d => d.Section === sel.value) || DATA[0];
+  const content = document.getElementById('deepDiveContent');
+  const top = section.top_products[0];
+  content.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+    <div class="metric-card"><div class="metric-label">Sector total</div><div class="metric-value" style="font-size:18px;">${fmt(section['Exports (USD)'])}</div></div>
+    <div class="metric-card"><div class="metric-label">Global share</div><div class="metric-value" style="font-size:18px;">${section.share.toFixed(2)}%</div></div>
+    <div class="metric-card"><div class="metric-label">HHI score</div><div class="metric-value" style="font-size:18px;">${section.HHI.toFixed(1)}</div></div>
+  </div>
+  <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:8px;">Top product: <strong style="color:var(--color-text-primary);">${top.HS4}</strong> — ${fmt(top['Exports (USD)'])} (${top['Share (%)'].toFixed(3)}% of all US exports)</div>`;
+
+  if(deepChart) { deepChart.destroy(); deepChart = null; }
+  const labels = section.top_products.map(p => p.HS4.length > 28 ? p.HS4.slice(0,26)+'…' : p.HS4);
+  const values = section.top_products.map(p => +(p['Exports (USD)'] / 1e9).toFixed(2));
+  deepChart = new Chart(document.getElementById('deepDiveChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: '#185FA5', borderWidth: 0, borderRadius: 4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' $' + ctx.raw + 'B' } } },
+      scales: { x: { ticks: { font: { size: 10 }, maxRotation: 20 } }, y: { grid: { color: 'rgba(128,128,128,0.1)' }, ticks: { callback: v => '$' + v + 'B', font: { size: 11 } } } }
+    }
+  });
+}
+
+function renderMegaRegions() {
+  const el = document.getElementById('megaregionGrid');
+  el.innerHTML = MEGA_REGIONS.map((r, i) => {
+    const c = COLORS[i % COLORS.length];
+    const sectorTags = r.sectors.map(s => `<span style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:4px;padding:2px 7px;font-size:11px;color:var(--color-text-secondary);">${s}</span>`).join('');
+    return `<div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px;border-top:3px solid ${c};">
+      <div style="font-weight:500;font-size:13px;color:var(--color-text-primary);margin-bottom:2px;">${r.name}</div>
+      <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:8px;">${r.cities} · <strong>${r.pop}</strong></div>
+      <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:8px;line-height:1.5;">${r.note}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">${sectorTags}</div>
+      <button onclick="sendPrompt('Tell me more about export industries in the ${r.name} mega-region and which specific products dominate there')" style="margin-top:10px;font-size:11px;padding:4px 10px;">Explore ${r.name} ↗</button>
+    </div>`;
+  }).join('');
+}
+
+function renderAnomalies() {
+  const el = document.getElementById('anomalyList');
+  const sections = DATA.filter(d => d.anomalies.high.length > 0 || d.anomalies.low.length > 0);
+  el.innerHTML = sections.map(d => {
+    const highs = d.anomalies.high.map(a => `<span class="anomaly-high">${a.HS4} (${a['Share (%)'].toFixed(3)}%)</span>`).join(' ');
+    const lows = d.anomalies.low.map(a => `<span class="anomaly-low">${a.HS4} (~0%)</span>`).join(' ');
+    return `<div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px 14px;">
+      <div style="font-weight:500;font-size:13px;color:var(--color-text-primary);margin-bottom:6px;">${d.Section}</div>
+      ${highs ? `<div style="margin-bottom:4px;font-size:11px;color:var(--color-text-secondary);">Dominant: ${highs}</div>` : ''}
+      ${lows ? `<div style="font-size:11px;color:var(--color-text-secondary);">Near-zero: ${lows}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+window.addEventListener('load', () => { renderOverview(); });
+</script>
