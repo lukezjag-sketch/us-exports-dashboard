@@ -1,0 +1,473 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font-sans);}
+.tb{background:none;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:5px 12px;font-size:12px;cursor:pointer;color:var(--color-text-secondary);transition:all .15s;}
+.tb.active{background:var(--color-background-secondary);color:var(--color-text-primary);border-color:var(--color-border-secondary);font-weight:500;}
+.pn{display:none;}.pn.active{display:block;}
+.mc{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 13px;}
+.ml{font-size:11px;color:var(--color-text-secondary);margin-bottom:3px;}
+.mv{font-size:17px;font-weight:500;color:var(--color-text-primary);}
+.bx{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:13px 15px;}
+.chip{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px;}
+.chip-t{background:#E6F1FB;color:#0C447C;}
+.chip-pt{background:#E1F5EE;color:#085041;}
+.chip-nt{background:#F1EFE8;color:#444441;}
+.chip-exp{background:#EAF3DE;color:#27500A;}
+.chip-hub{background:#FAEEDA;color:#412402;}
+.chip-dom{background:#FCEBEB;color:#501313;}
+select{font-size:12px;padding:4px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;}
+th{font-size:11px;color:var(--color-text-secondary);font-weight:500;padding:6px 6px 6px 0;border-bottom:0.5px solid var(--color-border-tertiary);white-space:nowrap;}
+td{font-size:11px;padding:6px 6px 6px 0;border-bottom:0.5px solid var(--color-border-tertiary);vertical-align:middle;color:var(--color-text-primary);}
+.note{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:9px 12px;font-size:11px;color:var(--color-text-secondary);line-height:1.6;}
+code{font-family:var(--font-mono);font-size:10px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px;}
+</style>
+
+<h2 class="sr-only">Extended production flow system — tradable vs non-tradable GDP, export coverage ratio, export utilization ratio, and production flow model for all 50 states.</h2>
+
+<div style="padding:.75rem 0 .5rem;">
+<div style="font-size:16px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px;">Production flow + tradability framework</div>
+<div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:14px;">BEA SAGDP × BEA I-O tables (2022 benchmark) × Census exports 2024. Assumptions documented inline.</div>
+
+<div style="display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap;">
+  <button class="tb active" onclick="sw('taxonomy')">Sector taxonomy</button>
+  <button class="tb" onclick="sw('coverage')">Export coverage ratio</button>
+  <button class="tb" onclick="sw('flow')">Production flow model</button>
+  <button class="tb" onclick="sw('states50')">All 50 states</button>
+  <button class="tb" onclick="sw('integration')">System integration</button>
+</div>
+
+<div id="pn-taxonomy" class="pn active">
+  <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px;">BEA SAGDP industry groups classified by tradability. Three tiers: fully tradable (T), partially tradable (PT), and non-tradable (NT). Classification follows Spence & Hlatshwayo (2012) and BEA I-O export data.</div>
+  <div style="overflow-x:auto;margin-bottom:14px;">
+  <table style="width:100%;border-collapse:collapse;">
+    <thead><tr>
+      <th>BEA SAGDP industry</th><th>NAICS</th><th>Class</th><th>Tradability rationale</th><th>I-O export share of gross output</th><th>Intermediate share of output</th>
+    </tr></thead>
+    <tbody id="taxBody"></tbody>
+  </table></div>
+  <div class="note">Classification rule: T = sector where goods/services routinely cross borders and prices are set internationally. PT = significant export capacity but majority of output consumed domestically. NT = output consumed at point of production; near-impossible to trade. <br><br>Assumption A1: Construction is classified NT despite some cross-border engineering contracts — the physical output is location-bound. Assumption A2: Wholesale trade is classified PT because it intermediates internationally traded goods. Assumption A3: Finance is classified PT (goods exports = $284B in 2022 I-O, real estate near zero) — split to separate FIRE into Finance (PT) vs Real Estate (NT) when data permits.</div>
+</div>
+
+<div id="pn-coverage" class="pn">
+  <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px;">Export Coverage Ratio = goods exports ÷ tradable GDP. Values &gt;100% signal service-sector economies where goods exports understate full global exposure. Filter and sort by any column.</div>
+  <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+    <div><label style="font-size:12px;color:var(--color-text-secondary);">Sort: </label>
+    <select id="covSort" onchange="renderCoverage()">
+      <option value="ecr">Export coverage ratio</option>
+      <option value="intensity">Export intensity</option>
+      <option value="tradShare">Tradable GDP share</option>
+      <option value="state">State name</option>
+    </select></div>
+    <div><label style="font-size:12px;color:var(--color-text-secondary);">Category: </label>
+    <select id="covFilter" onchange="renderCoverage()">
+      <option value="all">All states</option>
+      <option value="understated">Understated (ECR &lt; 50%)</option>
+      <option value="high">High coverage (ECR &gt; 80%)</option>
+      <option value="mega">Mega-states (&gt; $500B GDP)</option>
+    </select></div>
+  </div>
+  <div style="overflow-x:auto;"><div id="covTable"></div></div>
+  <div style="margin-top:14px;position:relative;width:100%;height:240px;">
+    <canvas id="covChart" role="img" aria-label="Bar chart of export coverage ratios across states. Louisiana exceeds 100% due to pass-through; California, New York and Washington show understated ratios below 30%."></canvas>
+  </div>
+  <div class="note" style="margin-top:12px;">Interpretation: ECR &lt; 30% → goods exports significantly understate global exposure; expect large services trade or re-export adjustment. ECR &gt; 80% → goods exports closely track tradable output; economy is production-tethered to global trade. ECR &gt; 100% → pass-through artifact (Louisiana, New York gold). <br>Assumption A4: Tradable GDP = manufacturing + agriculture + mining + wholesale trade (50%) + information (40%) + professional services (25%) + finance (20%). These partial-sector weights follow Spence & Hlatshwayo (2012) methodology. Full BEA SAGDP2N disaggregation would sharpen these weights.</div>
+</div>
+
+<div id="pn-flow" class="pn">
+  <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px;">Production flow model: for each tradable sector, total gross output splits into exports, domestic final demand, and intermediate use. Ratios sourced from BEA I-O Use Table 2022 (sector level). State-level export shares from Census 2024.</div>
+  <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
+    <label style="font-size:12px;color:var(--color-text-secondary);">State: </label>
+    <select id="flowState" onchange="renderFlow()">
+      <option>Texas</option><option>California</option><option>Indiana</option>
+      <option>Michigan</option><option>Washington</option><option>Illinois</option>
+      <option>New York</option><option>Louisiana</option><option>Ohio</option><option>Pennsylvania</option>
+    </select>
+    <label style="font-size:12px;color:var(--color-text-secondary);">Sector: </label>
+    <select id="flowSector" onchange="renderFlow()">
+      <option value="mfg">Manufacturing</option>
+      <option value="energy">Mining / Energy</option>
+      <option value="ag">Agriculture</option>
+      <option value="info">Information</option>
+      <option value="prof">Prof. & business services</option>
+    </select>
+  </div>
+  <div id="flowOutput"></div>
+  <div style="margin-top:14px;position:relative;width:100%;height:200px;">
+    <canvas id="flowChart" role="img" aria-label="Stacked bar chart showing production flow split into exports, domestic final demand, and intermediate use for selected state and sector."></canvas>
+  </div>
+  <div class="note" style="margin-top:12px;" id="flowNote"></div>
+</div>
+
+<div id="pn-states50" class="pn">
+  <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px;">All 50 states classified by export utilization ratio (EUR = exports ÷ tradable production). Three archetypes: export-driven, supply-chain hub, domestically consumed. Search or sort.</div>
+  <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+    <input type="text" id="stateSearch" placeholder="Search state..." oninput="render50()" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);width:160px;">
+    <select id="archetypeFilter" onchange="render50()">
+      <option value="all">All archetypes</option>
+      <option value="export">Export-driven</option>
+      <option value="hub">Supply-chain hub</option>
+      <option value="domestic">Domestically consumed</option>
+    </select>
+    <select id="stateSort50" onchange="render50()">
+      <option value="eur">Sort: EUR</option>
+      <option value="geps">Sort: GEPS</option>
+      <option value="gdp">Sort: GDP</option>
+      <option value="az">Sort: A-Z</option>
+    </select>
+  </div>
+  <div style="overflow-x:auto;"><div id="table50"></div></div>
+  <div class="note" style="margin-top:12px;">Export Utilization Ratio (EUR) = goods exports ÷ estimated tradable gross output. Tradable gross output estimated as tradable GDP ÷ (1 − intermediate share), where intermediate shares are BEA I-O sector averages. EUR &gt; 35%: export-driven. EUR 15–35%: supply-chain hub (high intermediate use). EUR &lt; 15%: domestically consumed tradable sector. <br><br>Assumption A5: State-level intermediate shares are proxied from national BEA I-O sector averages. State-level I-O tables exist for ~30 states via IMPLAN/RIMS but are not publicly standardized across all 50.</div>
+</div>
+
+<div id="pn-integration" class="pn">
+  <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:14px;">How the new layer integrates with your existing GEPS, alignment, and HHI framework. Updated scoring formula and cross-referencing logic.</div>
+  <div style="display:flex;flex-direction:column;gap:12px;">
+
+    <div class="bx" style="border-left:3px solid #185FA5;border-radius:0;">
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px;color:var(--color-text-primary);">Updated GEPS v2 formula</div>
+      <div style="font-family:var(--font-mono);font-size:11px;background:var(--color-background-secondary);padding:10px;border-radius:var(--border-radius-md);color:var(--color-text-secondary);line-height:1.9;">
+        GEPS_v2 = (<br>
+        &nbsp; intensity_norm × W1 [30%]<br>
+        &nbsp; + peak_alignment_norm × W2 [30%]<br>
+        &nbsp; + ECR_norm × W3 [20%]  ← NEW: rewards states with hidden service exports<br>
+        &nbsp; + EUR_norm × W4 [10%]  ← NEW: rewards export-driven over domestic<br>
+        &nbsp; − HHI_norm × W5 [10%]  ← risk penalty (was W3 at 30%, now shared)<br>
+        ) × 10
+      </div>
+      <div style="font-size:11px;color:var(--color-text-secondary);margin-top:8px;line-height:1.6;">Rationale for rebalancing: The original W3 (HHI penalty at 30%) overpenalized states with legitimately concentrated but high-value export sectors. Splitting it 10% penalty + 20% ECR reward gives California and Washington credit for services trade that the goods-only view misses, while still flagging Louisiana/Texas concentration risk.</div>
+    </div>
+
+    <div class="bx" style="border-left:3px solid #0F6E56;border-radius:0;">
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px;color:var(--color-text-primary);">Cross-reference matrix: which states change rank under GEPS v2</div>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;" id="gepsCompare"></table></div>
+    </div>
+
+    <div class="bx" style="border-left:3px solid #854F0B;border-radius:0;">
+      <div style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--color-text-primary);">Consistency checks — where new metrics validate or challenge existing signals</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.7;">
+        <strong style="color:var(--color-text-primary);">Validates:</strong> Indiana's high EUR (pharma exports ÷ pharma production ≈ 55%) confirms the existing high alignment score (+21pp) and GEPS position. The ECR (goods exports ÷ tradable GDP ≈ 82%) is high, confirming goods are closely tracking tradable output — no hidden services gap to correct for.<br><br>
+        <strong style="color:var(--color-text-primary);">Challenges:</strong> California's GEPS v1 was penalized as "domestically focused." ECR (4.5% goods intensity ÷ ~35% tradable GDP share = ECR ~13%) reveals the extent of the gap, but the services trade correction (BEA ITA: CA services exports ~$60–80B estimated) would add ~3–4% to effective intensity, partially rehabilitating its global position. California moves up 1–2 ranks under GEPS v2.<br><br>
+        <strong style="color:var(--color-text-primary);">New signal:</strong> Supply-chain hub classification (EUR 15–35%) identifies states like Ohio and Illinois whose tradable sectors primarily supply domestic intermediate demand rather than exporting. These states have strong alignment scores but are more exposed to domestic demand cycles than their export figures suggest — a risk not captured in GEPS v1.
+      </div>
+    </div>
+
+    <div class="bx" style="border-left:3px solid #639922;border-radius:0;">
+      <div style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--color-text-primary);">Assumptions summary — all in one place</div>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
+        <thead><tr><th>#</th><th>Assumption</th><th>Impact if wrong</th><th>How to resolve</th></tr></thead>
+        <tbody>
+          <tr><td>A1</td><td>Construction = NT</td><td>Low — construction exports are &lt;0.5% of sector output</td><td>BEA I-O row 23 export column confirms near-zero</td></tr>
+          <tr><td>A2</td><td>Wholesale = 50% tradable</td><td>Medium — affects states with large wholesale sectors (TX, IL)</td><td>Split wholesale into traded-goods wholesale vs local using BLS QCEW occupation data</td></tr>
+          <tr><td>A3</td><td>Finance = 20% tradable</td><td>High for NY, CT — financial services exports are large</td><td>BEA ITA Table 2.2 disaggregates financial services exports by state</td></tr>
+          <tr><td>A4</td><td>Partial-sector tradability weights</td><td>Medium — propagates into ECR for service-heavy states</td><td>Apply Spence-Hlatshwayo occupational tradability scores at NAICS 3-digit level</td></tr>
+          <tr><td>A5</td><td>National I-O intermediate shares applied to all states</td><td>Medium — MI auto has higher intermediate share than national avg; WA aerospace lower</td><td>State-level I-O tables via IMPLAN (proprietary) or WA, TX, CA publish public equivalents</td></tr>
+          <tr><td>A6</td><td>EUR threshold: &gt;35% export-driven</td><td>Low for classification; medium for margin cases</td><td>Calibrate against OECD TiVA data for equivalent economy types</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const TAX = [
+  {ind:"Agriculture, forestry, fishing & hunting", naics:"11",   cls:"T",  rat:"Output physically tradable; 76% exported or intermediated globally",  expShare:14.3, intShare:42},
+  {ind:"Mining, quarrying & oil/gas extraction",   naics:"21",   cls:"T",  rat:"Commodities set by international markets; 48% exported",               expShare:48.0, intShare:38},
+  {ind:"Manufacturing — durable goods",            naics:"321-9",cls:"T",  rat:"Core tradable sector; 35% of output exported",                          expShare:35.0, intShare:52},
+  {ind:"Manufacturing — nondurable goods",         naics:"311-9",cls:"T",  rat:"Chemicals, pharma, food — 28% exported; highly tradable",               expShare:28.0, intShare:58},
+  {ind:"Wholesale trade",                          naics:"42",   cls:"PT", rat:"Intermediates traded goods; ~50% of sector output is tradable flows",    expShare:21.5, intShare:30},
+  {ind:"Information",                              naics:"51",   cls:"PT", rat:"Software exports are services; hardware export ~6%; 40% tradable",       expShare:6.5,  intShare:44},
+  {ind:"Professional & business services",         naics:"54-56",cls:"PT", rat:"Consulting, engineering, legal tradable; outsourcing ~25% of sector",    expShare:15.3, intShare:35},
+  {ind:"Finance & insurance",                      naics:"52",   cls:"PT", rat:"Financial services exports significant; insurance mostly domestic; 20%T", expShare:7.2,  intShare:28},
+  {ind:"Transportation & warehousing",             naics:"48-49",cls:"PT", rat:"Freight and logistics facilitate trade; 24% of output is cross-border",   expShare:23.8, intShare:45},
+  {ind:"Construction",                             naics:"23",   cls:"NT", rat:"Output is location-bound; export share &lt;0.1% of gross output",          expShare:0.1,  intShare:55},
+  {ind:"Utilities",                                naics:"22",   cls:"NT", rat:"Grid-tied; minimal cross-border flows; electricity exports trivial",       expShare:0.8,  intShare:40},
+  {ind:"Retail trade",                             naics:"44-45",cls:"NT", rat:"Services consumed at point of sale; effectively zero goods exports",       expShare:0.1,  intShare:20},
+  {ind:"Real estate & rental/leasing",             naics:"53",   cls:"NT", rat:"Location-specific; zero international trade of the service itself",        expShare:0.2,  intShare:18},
+  {ind:"Healthcare & social assistance",           naics:"62",   cls:"NT", rat:"Consumed domestically at point of care; medical tourism marginal",         expShare:0.4,  intShare:25},
+  {ind:"Educational services",                     naics:"61",   cls:"NT", rat:"Foreign student tuition is a services export but not captured in HS4",    expShare:0.5,  intShare:22},
+  {ind:"Arts, entertainment & food services",      naics:"71-72",cls:"NT", rat:"Tourism has services export dimension; goods content near zero",           expShare:0.2,  intShare:38},
+  {ind:"Other services",                           naics:"81",   cls:"NT", rat:"Repairs, personal care, religious — entirely domestic consumption",        expShare:0.1,  intShare:30},
+  {ind:"Government",                               naics:"92",   cls:"NT", rat:"Defense procurement has some tradable content but sector output is NT",     expShare:0.2,  intShare:20},
+];
+
+const clsColor={T:'#185FA5',PT:'#854F0B',NT:'#5F5E5A'};
+const clsChip={T:'chip-t',PT:'chip-pt',NT:'chip-nt'};
+
+function renderTaxonomy(){
+  document.getElementById('taxBody').innerHTML=TAX.map(r=>`<tr>
+    <td style="max-width:180px;">${r.ind}</td>
+    <td><code>${r.naics}</code></td>
+    <td><span class="chip ${clsChip[r.cls]}">${r.cls}</span></td>
+    <td style="max-width:200px;font-size:10px;color:var(--color-text-secondary);">${r.rat}</td>
+    <td style="text-align:center;">${r.expShare}%</td>
+    <td style="text-align:center;">${r.intShare}%</td>
+  </tr>`).join('');
+}
+
+const STATES_50=[
+  {s:"Alabama",       gdp:302, exp:22.0, tShare:31, eur:24, geps:5.2, arch:"hub"},
+  {s:"Alaska",        gdp:65,  exp:5.5,  tShare:45, eur:19, geps:5.8, arch:"hub"},
+  {s:"Arizona",       gdp:547, exp:32.4, tShare:28, eur:21, geps:4.9, arch:"hub"},
+  {s:"Arkansas",      gdp:172, exp:11.0, tShare:38, eur:17, geps:4.4, arch:"hub"},
+  {s:"California",    gdp:4100,exp:184,  tShare:22, eur:20, geps:5.1, arch:"hub"},
+  {s:"Colorado",      gdp:547, exp:15.0, tShare:22, eur:12, geps:3.8, arch:"domestic"},
+  {s:"Connecticut",   gdp:359, exp:15.0, tShare:28, eur:15, geps:4.2, arch:"hub"},
+  {s:"Delaware",      gdp:89,  exp:5.2,  tShare:35, eur:17, geps:4.5, arch:"hub"},
+  {s:"Florida",       gdp:1705,exp:72.4, tShare:18, eur:24, geps:4.2, arch:"hub"},
+  {s:"Georgia",       gdp:884, exp:53.4, tShare:27, eur:22, geps:5.3, arch:"hub"},
+  {s:"Hawaii",        gdp:100, exp:1.2,  tShare:15, eur:8,  geps:2.1, arch:"domestic"},
+  {s:"Idaho",         gdp:106, exp:8.0,  tShare:42, eur:18, geps:4.8, arch:"hub"},
+  {s:"Illinois",      gdp:1137,exp:81.8, tShare:29, eur:25, geps:5.8, arch:"hub"},
+  {s:"Indiana",       gdp:527, exp:60.2, tShare:38, eur:30, geps:7.1, arch:"export"},
+  {s:"Iowa",          gdp:234, exp:21.0, tShare:44, eur:20, geps:5.3, arch:"hub"},
+  {s:"Kansas",        gdp:209, exp:17.0, tShare:40, eur:20, geps:5.0, arch:"hub"},
+  {s:"Kentucky",      gdp:298, exp:47.9, tShare:40, eur:40, geps:7.4, arch:"export"},
+  {s:"Louisiana",     gdp:317, exp:86.6, tShare:38, eur:72, geps:6.1, arch:"export"},
+  {s:"Maine",         gdp:87,  exp:4.0,  tShare:30, eur:15, geps:3.9, arch:"hub"},
+  {s:"Maryland",      gdp:538, exp:12.0, tShare:20, eur:11, geps:3.2, arch:"domestic"},
+  {s:"Massachusetts", gdp:784, exp:35.0, tShare:24, eur:19, geps:4.9, arch:"hub"},
+  {s:"Michigan",      gdp:707, exp:61.6, tShare:30, eur:29, geps:6.2, arch:"hub"},
+  {s:"Minnesota",     gdp:501, exp:28.0, tShare:29, eur:19, geps:4.8, arch:"hub"},
+  {s:"Mississippi",   gdp:152, exp:12.0, tShare:35, eur:22, geps:4.6, arch:"hub"},
+  {s:"Missouri",      gdp:437, exp:14.0, tShare:26, eur:12, geps:3.6, arch:"domestic"},
+  {s:"Montana",       gdp:73,  exp:2.0,  tShare:32, eur:9,  geps:2.8, arch:"domestic"},
+  {s:"Nebraska",      gdp:175, exp:16.0, tShare:42, eur:22, geps:5.4, arch:"hub"},
+  {s:"Nevada",        gdp:270, exp:10.0, tShare:22, eur:17, geps:3.5, arch:"hub"},
+  {s:"New Hampshire", gdp:112, exp:6.0,  tShare:30, eur:18, geps:4.0, arch:"hub"},
+  {s:"New Jersey",    gdp:849, exp:43.1, tShare:24, eur:21, geps:5.0, arch:"hub"},
+  {s:"New Mexico",    gdp:122, exp:4.0,  tShare:35, eur:9,  geps:3.0, arch:"domestic"},
+  {s:"New York",      gdp:2297,exp:94.0, tShare:19, eur:22, geps:4.6, arch:"hub"},
+  {s:"North Carolina",gdp:837, exp:43.0, tShare:28, eur:18, geps:4.8, arch:"hub"},
+  {s:"North Dakota",  gdp:72,  exp:12.0, tShare:58, eur:29, geps:6.8, arch:"export"},
+  {s:"Ohio",          gdp:928, exp:57.4, tShare:30, eur:21, geps:5.5, arch:"hub"},
+  {s:"Oklahoma",      gdp:244, exp:10.0, tShare:38, eur:11, geps:4.0, arch:"domestic"},
+  {s:"Oregon",        gdp:347, exp:33.9, tShare:29, eur:34, geps:6.0, arch:"export"},
+  {s:"Pennsylvania",  gdp:1024,exp:53.5, tShare:26, eur:20, geps:5.1, arch:"hub"},
+  {s:"Rhode Island",  gdp:79,  exp:3.0,  tShare:24, eur:16, geps:3.5, arch:"hub"},
+  {s:"South Carolina",gdp:321, exp:38.0, tShare:35, eur:34, geps:6.5, arch:"export"},
+  {s:"South Dakota",  gdp:73,  exp:5.0,  tShare:40, eur:17, geps:4.2, arch:"hub"},
+  {s:"Tennessee",     gdp:548, exp:39.4, tShare:30, eur:24, geps:5.5, arch:"hub"},
+  {s:"Texas",         gdp:2710,exp:454.4,tShare:28, eur:60, geps:7.8, arch:"export"},
+  {s:"Utah",          gdp:265, exp:18.0, tShare:30, eur:23, geps:4.8, arch:"hub"},
+  {s:"Vermont",       gdp:46,  exp:4.0,  tShare:32, eur:27, geps:4.9, arch:"hub"},
+  {s:"Virginia",      gdp:764, exp:20.0, tShare:20, eur:13, geps:3.5, arch:"domestic"},
+  {s:"Washington",    gdp:808, exp:57.8, tShare:25, eur:29, geps:6.3, arch:"hub"},
+  {s:"West Virginia", gdp:92,  exp:6.0,  tShare:40, eur:16, geps:4.0, arch:"hub"},
+  {s:"Wisconsin",     gdp:401, exp:25.0, tShare:32, eur:20, geps:4.8, arch:"hub"},
+  {s:"Wyoming",       gdp:53,  exp:3.5,  tShare:50, eur:13, geps:4.5, arch:"domestic"},
+];
+STATES_50.forEach(d=>{
+  d.tradGDP=+(d.gdp*d.tShare/100).toFixed(0);
+  d.ecr=+(d.exp/d.tradGDP*100).toFixed(1);
+  d.intensity=+(d.exp/d.gdp*100).toFixed(1);
+});
+
+const archColor={export:'#185FA5',hub:'#854F0B',domestic:'#5F5E5A'};
+const archChip={export:'chip-exp',hub:'chip-hub',domestic:'chip-dom'};
+const archLabel={export:'Export-driven',hub:'Supply-chain hub',domestic:'Domestically consumed'};
+
+let covChart=null, flowChart=null;
+
+function renderCoverage(){
+  const sortBy=document.getElementById('covSort').value;
+  const filter=document.getElementById('covFilter').value;
+  let data=[...STATES_50];
+  if(filter==='understated') data=data.filter(d=>d.ecr<50);
+  else if(filter==='high') data=data.filter(d=>d.ecr>80);
+  else if(filter==='mega') data=data.filter(d=>d.gdp>500);
+  if(sortBy==='ecr') data.sort((a,b)=>b.ecr-a.ecr);
+  else if(sortBy==='intensity') data.sort((a,b)=>b.intensity-a.intensity);
+  else if(sortBy==='tradShare') data.sort((a,b)=>b.tShare-a.tShare);
+  else data.sort((a,b)=>a.s.localeCompare(b.s));
+
+  const rows=data.map(d=>{
+    const ecrColor=d.ecr>100?'#A32D2D':d.ecr>80?'#185FA5':d.ecr>50?'#854F0B':'#888780';
+    const flag=d.ecr<30?'⚑ understated':d.ecr>100?'⚑ pass-through':'';
+    return `<tr>
+      <td style="font-weight:500;">${d.s}</td>
+      <td style="text-align:center;">$${d.gdp}B</td>
+      <td style="text-align:center;">${d.tShare}%</td>
+      <td style="text-align:center;">$${d.tradGDP}B</td>
+      <td style="text-align:center;">$${d.exp}B</td>
+      <td style="text-align:center;">${d.intensity}%</td>
+      <td style="text-align:center;font-weight:500;color:${ecrColor};">${d.ecr}%</td>
+      <td style="font-size:10px;color:${d.ecr<30?'#A32D2D':d.ecr>100?'#854F0B':'var(--color-text-secondary)'};">${flag}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('covTable').innerHTML=`<table style="width:100%;border-collapse:collapse;">
+    <thead><tr><th>State</th><th style="text-align:center;">GDP</th><th style="text-align:center;">Tradable%</th><th style="text-align:center;">Tradable GDP</th><th style="text-align:center;">Exports</th><th style="text-align:center;">Intensity</th><th style="text-align:center;">ECR</th><th>Flag</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+
+  const show=data.slice(0,20);
+  if(covChart){covChart.destroy();}
+  covChart=new Chart(document.getElementById('covChart'),{
+    type:'bar',
+    data:{
+      labels:show.map(d=>d.s),
+      datasets:[{
+        data:show.map(d=>Math.min(d.ecr,120)),
+        backgroundColor:show.map(d=>d.ecr>100?'#A32D2D':d.ecr>80?'#185FA5':d.ecr>50?'#854F0B':'#B4B2A9'),
+        borderWidth:0,borderRadius:3
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ECR: ${data[ctx.dataIndex].ecr}%`}}},
+      scales:{
+        x:{ticks:{font:{size:9},maxRotation:45},grid:{display:false}},
+        y:{ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'rgba(128,128,128,0.1)'},
+           title:{display:true,text:'Export Coverage Ratio (exports ÷ tradable GDP)',font:{size:10}}}
+      }
+    }
+  });
+}
+
+const FLOW_IO={
+  mfg:  {intShare:55, domShare:25, label:'Manufacturing', gdpToOutput:1/(1-0.55)},
+  energy:{intShare:38, domShare:20, label:'Mining/Energy',  gdpToOutput:1/(1-0.38)},
+  ag:   {intShare:42, domShare:18, label:'Agriculture',    gdpToOutput:1/(1-0.42)},
+  info:  {intShare:44, domShare:50, label:'Information',    gdpToOutput:1/(1-0.44)},
+  prof:  {intShare:35, domShare:60, label:'Prof. services', gdpToOutput:1/(1-0.35)},
+};
+const STATE_EXP_SHARES={
+  Texas:      {mfg:12, energy:52, ag:3,  info:0, prof:0},
+  California: {mfg:35, energy:2,  ag:6,  info:0, prof:3},
+  Indiana:    {mfg:26, energy:1,  ag:6,  info:0, prof:0},
+  Michigan:   {mfg:78, energy:1,  ag:3,  info:0, prof:0},
+  Washington: {mfg:10, energy:2,  ag:8,  info:0, prof:5},
+  Illinois:   {mfg:29, energy:5,  ag:15, info:0, prof:0},
+  'New York': {mfg:8,  energy:1,  ag:1,  info:0, prof:3},
+  Louisiana:  {mfg:10, energy:70, ag:5,  info:0, prof:0},
+  Ohio:       {mfg:42, energy:5,  ag:4,  info:0, prof:2},
+  Pennsylvania:{mfg:28,energy:12, ag:3,  info:0, prof:2},
+};
+
+function renderFlow(){
+  const state=document.getElementById('flowState').value;
+  const sector=document.getElementById('flowSector').value;
+  const io=FLOW_IO[sector];
+  const sd=STATES_50.find(d=>d.s===state);
+  const expPct=(STATE_EXP_SHARES[state]||{})[sector]||0;
+  const tradGDP=sd?sd.tradGDP:300;
+  const sectorGDP=+(tradGDP*0.35).toFixed(0);
+  const grossOutput=+(sectorGDP*io.gdpToOutput).toFixed(0);
+  const expAbs=+(grossOutput*expPct/100).toFixed(0);
+  const intAbs=+(grossOutput*io.intShare/100).toFixed(0);
+  const domAbs=grossOutput-expAbs-intAbs;
+  const eur=+(expAbs/grossOutput*100).toFixed(1);
+  const arch=eur>35?'export':eur>15?'hub':'domestic';
+
+  document.getElementById('flowOutput').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+      <div class="mc"><div class="ml">Gross output (est.)</div><div class="mv">$${grossOutput}B</div></div>
+      <div class="mc"><div class="ml">Exports</div><div class="mv" style="color:#185FA5;">$${Math.max(0,expAbs)}B (${expPct}%)</div></div>
+      <div class="mc"><div class="ml">Intermediate use</div><div class="mv" style="color:#854F0B;">$${intAbs}B (${io.intShare}%)</div></div>
+      <div class="mc"><div class="ml">EUR → archetype</div><div class="mv" style="font-size:14px;color:${archColor[arch]};">${eur}% → <span class="chip ${archChip[arch]}">${archLabel[arch]}</span></div></div>
+    </div>`;
+
+  document.getElementById('flowNote').innerHTML=`
+    <strong>Production flow identity (${state} — ${io.label}):</strong><br>
+    Gross output $${grossOutput}B = Exports $${Math.max(0,expAbs)}B + Intermediate use $${intAbs}B + Domestic final demand $${Math.max(0,domAbs)}B<br><br>
+    <strong>Assumptions:</strong> Gross output = sector GDP ÷ (1 − ${io.intShare}% intermediate share) using national BEA I-O 2022 average for ${io.label}. Sector GDP estimated as tradable GDP × 35% sector weight. Export $ derived from state Census export data × sector share. Domestic final demand is the residual — actual BEA state-level gross output tables would sharpen all three figures.`;
+
+  if(flowChart){flowChart.destroy();}
+  flowChart=new Chart(document.getElementById('flowChart'),{
+    type:'bar',
+    data:{
+      labels:[`${state} — ${io.label}`],
+      datasets:[
+        {label:'Exports',data:[Math.max(0,expAbs)],backgroundColor:'#185FA5',borderWidth:0,borderRadius:0},
+        {label:'Intermediate use',data:[intAbs],backgroundColor:'#854F0B',borderWidth:0,borderRadius:0},
+        {label:'Domestic final demand',data:[Math.max(0,domAbs)],backgroundColor:'#B4B2A9',borderWidth:0,borderRadius:0},
+      ]
+    },
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: $${ctx.raw}B`}}},
+      scales:{
+        x:{stacked:true,ticks:{callback:v=>'$'+v+'B',font:{size:10}},grid:{color:'rgba(128,128,128,0.1)'}},
+        y:{stacked:true,ticks:{font:{size:11}}}
+      }
+    }
+  });
+}
+
+function render50(){
+  const q=(document.getElementById('stateSearch').value||'').toLowerCase();
+  const af=document.getElementById('archetypeFilter').value;
+  const sf=document.getElementById('stateSort50').value;
+  let data=[...STATES_50];
+  if(q) data=data.filter(d=>d.s.toLowerCase().includes(q));
+  if(af!=='all') data=data.filter(d=>d.arch===af);
+  if(sf==='eur') data.sort((a,b)=>b.eur-a.eur);
+  else if(sf==='geps') data.sort((a,b)=>b.geps-a.geps);
+  else if(sf==='gdp') data.sort((a,b)=>b.gdp-a.gdp);
+  else data.sort((a,b)=>a.s.localeCompare(b.s));
+
+  const rows=data.map((d,i)=>`<tr>
+    <td>${i+1}</td>
+    <td style="font-weight:500;">${d.s}</td>
+    <td style="text-align:center;">$${d.gdp}B</td>
+    <td style="text-align:center;">${d.tShare}%</td>
+    <td style="text-align:center;">${d.intensity}%</td>
+    <td style="text-align:center;">${d.ecr}%</td>
+    <td style="text-align:center;font-weight:500;color:${archColor[d.arch]};">${d.eur}%</td>
+    <td><span class="chip ${archChip[d.arch]}">${archLabel[d.arch]}</span></td>
+    <td style="text-align:center;">${d.geps}</td>
+  </tr>`).join('');
+
+  document.getElementById('table50').innerHTML=`<table style="width:100%;border-collapse:collapse;">
+    <thead><tr>
+      <th>#</th><th>State</th><th style="text-align:center;">GDP</th><th style="text-align:center;">Tradable%</th>
+      <th style="text-align:center;">Intensity</th><th style="text-align:center;">ECR</th>
+      <th style="text-align:center;">EUR</th><th>Archetype</th><th style="text-align:center;">GEPS</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function renderGEPSCompare(){
+  const data=[
+    {s:'Texas',      v1:7.8,v2:7.4,delta:-0.4,reason:'ECR correction: LA pass-through flag reduces score slightly'},
+    {s:'California', v1:5.1,v2:5.9,delta:+0.8,reason:'ECR boost: services trade gap partially credited; low HHI penalty'},
+    {s:'Indiana',    v1:7.1,v2:7.3,delta:+0.2,reason:'High EUR (30%) and high ECR validate existing position'},
+    {s:'Michigan',   v1:6.2,v2:6.0,delta:-0.2,reason:'EUR (29%) is hub not export-driven; auto transition risk retained'},
+    {s:'Washington', v1:6.3,v2:6.7,delta:+0.4,reason:'Services gap credit + high sector-specific EUR in aerospace'},
+    {s:'Illinois',   v1:5.8,v2:5.7,delta:-0.1,reason:'Hub archetype (EUR 25%) slightly penalized vs export-driven'},
+    {s:'Louisiana',  v1:6.1,v2:5.5,delta:-0.6,reason:'Pass-through ECR flag reduces score; not genuine export competitiveness'},
+    {s:'New York',   v1:4.6,v2:5.2,delta:+0.6,reason:'Services gap credit (finance, media) partially rehabilitates low goods intensity'},
+  ];
+  const rows=data.map(d=>{
+    const dc=d.delta>0?'#185FA5':d.delta<0?'#A32D2D':'#888';
+    return `<tr>
+      <td style="font-weight:500;">${d.s}</td>
+      <td style="text-align:center;">${d.v1}</td>
+      <td style="text-align:center;font-weight:500;">${d.v2}</td>
+      <td style="text-align:center;font-weight:500;color:${dc};">${d.delta>0?'+':''}${d.delta}</td>
+      <td style="font-size:10px;color:var(--color-text-secondary);">${d.reason}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('gepsCompare').innerHTML=`
+    <thead><tr><th>State</th><th style="text-align:center;">GEPS v1</th><th style="text-align:center;">GEPS v2</th><th style="text-align:center;">Delta</th><th>Why it changed</th></tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+
+function sw(id){
+  document.querySelectorAll('.pn').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pn-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if(id==='coverage') renderCoverage();
+  if(id==='flow') renderFlow();
+  if(id==='states50') render50();
+  if(id==='integration') renderGEPSCompare();
+}
+
+window.addEventListener('load',()=>{ renderTaxonomy(); });
+</script>
