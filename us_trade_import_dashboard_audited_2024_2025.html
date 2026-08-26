@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>U.S. Import Foundation — Audited 2024 Base + 2025 Update</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+ --bg:#f6f8fb;--panel:#ffffff;--panel2:#f0f3f7;--text:#172033;--muted:#637083;--border:#d9e0e8;
+ --blue:#1f5aa6;--red:#b33535;--green:#16705c;--amber:#94651d;--purple:#5a4aa3;--shadow:0 8px 30px rgba(25,38,60,.08);
+ --radius:14px;--radius-sm:9px;--font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:var(--font);color:var(--text)}
+a{color:var(--blue)}.wrap{max-width:1240px;margin:0 auto;padding:28px 20px 54px}
+.hero{background:linear-gradient(135deg,#172033,#243a61 70%,#31558a);color:#fff;border-radius:20px;padding:28px 30px;box-shadow:var(--shadow);margin-bottom:18px}
+.kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.72}.hero h1{margin:6px 0 7px;font-size:30px;line-height:1.15}.hero p{margin:0;max-width:880px;font-size:13px;line-height:1.6;opacity:.88}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.badge{font-size:11px;padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.tb{border:1px solid var(--border);background:var(--panel);color:var(--muted);padding:9px 13px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:600}.tb.active{background:#eaf1fb;color:var(--blue);border-color:#b9cbea}
+.pn{display:none}.pn.active{display:block}.grid{display:grid;gap:12px}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card,.box,.note{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 2px 8px rgba(20,30,48,.03)}
+.card{padding:14px 15px}.label{font-size:11px;color:var(--muted);margin-bottom:5px}.value{font-size:21px;font-weight:750}.sub{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.45}
+.box{padding:16px 17px}.box h3{font-size:13px;margin:0 0 10px}.note{padding:12px 14px;color:var(--muted);font-size:11px;line-height:1.6;background:#fbfcfe}
+.note strong{color:var(--text)}.warn{border-left:4px solid var(--amber)}.good{border-left:4px solid var(--green)}.bad{border-left:4px solid var(--red)}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}input,select{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:9px;padding:8px 10px;font-size:12px}
+.table-wrap{overflow:auto;background:#fff;border:1px solid var(--border);border-radius:var(--radius)}table{width:100%;border-collapse:collapse;min-width:860px}th{position:sticky;top:0;background:#f7f9fc;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:10px 9px;border-bottom:1px solid var(--border);white-space:nowrap}td{font-size:11px;padding:9px;border-bottom:1px solid #edf1f5;vertical-align:top}tr:hover td{background:#fbfdff}.num{text-align:right;font-variant-numeric:tabular-nums}.center{text-align:center}
+.chip{display:inline-block;font-size:10px;font-weight:700;padding:3px 7px;border-radius:999px}.c-red{background:#fdeaea;color:#7b2222}.c-blue{background:#e8f0fb;color:#1f4f88}.c-gray{background:#eef1f4;color:#536173}.c-green{background:#e7f5f0;color:#17614f}.c-amber{background:#fff3df;color:#815613}
+.chart{height:290px;position:relative}.small-chart{height:220px;position:relative}.section-title{margin:18px 0 10px;font-size:17px}.muted{color:var(--muted)}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.footer{margin-top:22px;font-size:10px;color:var(--muted);line-height:1.55}
+.callout{padding:12px 14px;border-radius:12px;background:#eef4fc;border:1px solid #c8d8ef;font-size:11px;line-height:1.6;color:#324c70}
+@media(max-width:900px){.g4,.g3,.g2{grid-template-columns:1fr 1fr}.hero h1{font-size:24px}}@media(max-width:620px){.g4,.g3,.g2{grid-template-columns:1fr}.wrap{padding:16px 10px 35px}.hero{padding:20px}.chart{height:240px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section class="hero">
+ <div class="kicker">U.S. Trade Research Project</div>
+ <h1>U.S. Import Foundation</h1>
+ <p>Audited 2024 detailed base with a 2025 annual macro update. Detailed HS/product tables retain 2024 as the reference year until primary Census/USITC HS-level pulls are completed; 2025 figures are shown only where they are directly supported by the annual BEA/Census release.</p>
+ <div class="badges"><span class="badge">2024 audited base</span><span class="badge">2025 annual update</span><span class="badge">Observed vs estimated labeled</span><span class="badge">HHI standardized</span></div>
+</section>
+
+<div class="tabs">
+ <button class="tb active" data-tab="overview">Overview</button>
+ <button class="tb" data-tab="y2025">2025 update</button>
+ <button class="tb" data-tab="sectors">HS sectors</button>
+ <button class="tb" data-tab="products">Product explorer</button>
+ <button class="tb" data-tab="countries">Country origins</button>
+ <button class="tb" data-tab="enduse">Intermediate vs final</button>
+ <button class="tb" data-tab="supplychain">Supply-chain flows</button>
+ <button class="tb" data-tab="methodology">Methodology & audit</button>
+</div>
+
+<section id="overview" class="pn active">
+ <div class="grid g4">
+  <div class="card"><div class="label">2024 goods imports · Census basis</div><div class="value">$3.264T</div><div class="sub">Audited FT-900 total</div></div>
+  <div class="card"><div class="label">2024 total goods exports · Census basis</div><div class="value">$2.063T</div><div class="sub">Includes re-exports</div></div>
+  <div class="card"><div class="label">2024 domestic exports · project base</div><div class="value">≈$1.896T</div><div class="sub">Excludes re-exports; aligns with your original HS export system</div></div>
+  <div class="card"><div class="label">2024 related-party imports</div><div class="value">49.5%</div><div class="sub">Of imports for consumption; ownership relationship, not end-use</div></div>
+ </div>
+ <h2 class="section-title">Audited 2024 end-use composition</h2>
+ <div class="grid g4">
+  <div class="card"><div class="label">Capital goods</div><div class="value">$960.3B</div><div class="sub">29.4% of goods imports</div></div>
+  <div class="card"><div class="label">Consumer goods</div><div class="value">$803.9B</div><div class="sub">24.6% of goods imports</div></div>
+  <div class="card"><div class="label">Industrial supplies</div><div class="value">$675.7B</div><div class="sub">20.7% of goods imports</div></div>
+  <div class="card"><div class="label">Automotive</div><div class="value">$473.3B</div><div class="sub">14.5% of goods imports</div></div>
+ </div>
+ <div class="grid g2" style="margin-top:12px">
+  <div class="box"><h3>2024 import end-use mix</h3><div class="chart"><canvas id="overviewChart"></canvas></div></div>
+  <div class="box"><h3>Why the export totals differ</h3><div class="callout"><strong>≈$1.896T</strong> is the project’s domestic-export series: U.S.-origin goods only. <strong>$2.063T</strong> is total Census-basis goods exports and includes re-exports. The gap is roughly the value of foreign-origin merchandise re-exported from the United States. For production analysis, domestic exports are the cleaner reference; for macro trade reporting, total exports remain useful.</div><div class="note warn" style="margin-top:10px"><strong>Do not mix the two series in a trade-balance calculation.</strong> The dashboard keeps them visibly separate.</div></div>
+ </div>
+</section>
+
+<section id="y2025" class="pn">
+ <div class="note good"><strong>2025 is now the latest completed annual trade year.</strong> The figures below are from the BEA/Census December & Annual 2025 release. They are shown as a current macro update; the detailed HS/product research remains on the audited 2024 base until the 2025 primary HS-level data pipeline is loaded.</div>
+ <div class="grid g4" style="margin-top:12px">
+  <div class="card"><div class="label">2025 goods exports · BOP basis</div><div class="value">$2.198T</div><div class="sub">+ $117.7B from 2024</div></div>
+  <div class="card"><div class="label">2025 goods imports · BOP basis</div><div class="value">$3.438T</div><div class="sub">+ $143.2B from 2024</div></div>
+  <div class="card"><div class="label">2025 goods deficit · BOP basis</div><div class="value" style="color:var(--red)">−$1.241T</div><div class="sub">Deficit widened $25.5B</div></div>
+  <div class="card"><div class="label">2025 goods + services deficit</div><div class="value" style="color:var(--red)">−$901.5B</div><div class="sub">Down $2.1B from 2024</div></div>
+ </div>
+ <div class="grid g4" style="margin-top:12px">
+  <div class="card"><div class="label">Total exports · goods + services</div><div class="value">$3.432T</div><div class="sub">+6.2% year over year</div></div>
+  <div class="card"><div class="label">Total imports · goods + services</div><div class="value">$4.334T</div><div class="sub">+4.8% year over year</div></div>
+  <div class="card"><div class="label">Services exports</div><div class="value">$1.235T</div><div class="sub">+$82.1B</div></div>
+  <div class="card"><div class="label">Services imports</div><div class="value">$895.4B</div><div class="sub">+$54.5B</div></div>
+ </div>
+ <div class="grid g2" style="margin-top:12px">
+  <div class="box"><h3>2025 macro trade snapshot</h3><div class="chart"><canvas id="y2025Chart"></canvas></div></div>
+  <div class="box"><h3>Largest 2025 goods movements called out by BEA/Census</h3>
+   <table style="min-width:0"><tbody>
+    <tr><td>Capital-goods imports</td><td class="num"><strong>+$165.9B</strong></td></tr>
+    <tr><td>Computers imports</td><td class="num"><strong>+$101.4B</strong></td></tr>
+    <tr><td>Industrial-supplies exports</td><td class="num"><strong>+$55.8B</strong></td></tr>
+    <tr><td>Automotive imports</td><td class="num"><strong>−$52.0B</strong></td></tr>
+    <tr><td>Crude-oil imports</td><td class="num"><strong>−$27.6B</strong></td></tr>
+    <tr><td>Services surplus</td><td class="num"><strong>$339.5B</strong></td></tr>
+   </tbody></table>
+   <div class="note" style="margin-top:10px">These are changes reported in the annual release, not reconstructed HS totals. Detailed 2025 commodity values should be added only after a primary Census/USITC pull.</div>
+  </div>
+ </div>
+</section>
+
+<section id="sectors" class="pn">
+ <div class="note warn"><strong>2024 provisional HS-section layer.</strong> The audit found that the original 21-section values came from third-party HS aggregations and did not fully reconcile to the FT-900 national total. These rows are preserved for exploration, but they are labeled provisional pending a direct USA Trade Online / USITC DataWeb pull.</div>
+ <div class="controls"><input id="secSearch" placeholder="Search section..."/><select id="secSort"><option value="imp">Sort: imports ↓</option><option value="exp">Sort: exports ↓</option><option value="bal">Sort: balance</option><option value="ratio">Sort: I/E ratio</option></select><select id="secFilter"><option value="all">All</option><option value="deficit">Net importer</option><option value="surplus">Net exporter</option></select></div>
+ <div id="sectorTable" class="table-wrap"></div><div class="box" style="margin-top:12px"><h3>Top sections · provisional 2024 values</h3><div class="chart"><canvas id="sectorChart"></canvas></div></div>
+</section>
+
+<section id="products" class="pn">
+ <div class="note warn"><strong>Product-level audit status varies.</strong> Known 2024 corrections are applied where the FT-900 audit provided a primary value; other rows remain provisional until Census/USITC HS-level verification. Aggregations such as “semiconductors” and “computers & accessories” are explicitly labeled as multi-code aggregates.</div>
+ <div class="controls"><input id="prodSearch" placeholder="Search product..."/><select id="prodFilter"><option value="all">All products</option><option value="import-dep">Import-dependent (&gt;3×)</option><option value="export-str">Export-oriented</option><option value="two-way">Two-way trade</option></select><select id="prodSort"><option value="imp">Sort: imports ↓</option><option value="bal">Sort: balance</option><option value="ratio">Sort: I/E ratio</option></select></div>
+ <div id="productTable" class="table-wrap"></div>
+</section>
+
+<section id="countries" class="pn">
+ <div class="note warn"><strong>Supplier concentration is not the same as vulnerability.</strong> HHI below is displayed on the standard 0–10,000 scale where enough information exists to estimate it. High concentration still requires context on substitutability, inventories, alternative suppliers, and strategic importance.</div>
+ <div class="grid g3" style="margin-top:12px"><div class="card"><div class="label">#1 source in original 2024 table</div><div class="value">Mexico</div><div class="sub">Country-origin table remains provisional pending primary pull</div></div><div class="card"><div class="label">HHI standard</div><div class="value">0–10,000</div><div class="sub">&lt;1,500 low · 1,500–2,500 moderate · &gt;2,500 high</div></div><div class="card"><div class="label">Interpretation</div><div class="value">Concentration</div><div class="sub">Not “danger” by itself</div></div></div>
+ <div class="box" style="margin-top:12px"><h3>Selected supplier-concentration examples</h3><div id="hhiTable" class="table-wrap"></div></div>
+</section>
+
+<section id="enduse" class="pn">
+ <div class="grid g2">
+  <div class="box"><h3>Observed 2024 Census End-Use categories</h3><div class="small-chart"><canvas id="endUseChart"></canvas></div></div>
+  <div class="box"><h3>What can be said defensibly?</h3><div class="callout"><strong>50.1%</strong> of 2024 goods imports are directly classifiable as capital goods + industrial supplies. Those two groups are the clearest production-oriented categories. Automotive, foods, and some consumer goods contain mixtures of intermediate and final use and should not be mechanically assigned without finer data.</div><div class="note good" style="margin-top:10px"><strong>Best current range:</strong> about <strong>50–57%</strong> is defensible with high-to-medium confidence; a wider <strong>55–65%</strong> range is plausible only after adding modeled shares of automotive and other mixed categories. The old 67% point estimate has been removed.</div></div>
+ </div>
+ <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Category</th><th class="num">2024 value</th><th>Source type</th><th>Interpretation</th></tr></thead><tbody>
+  <tr><td>Capital goods</td><td class="num">$960.3B</td><td><span class="chip c-green">Observed</span></td><td>Primarily production investment</td></tr>
+  <tr><td>Industrial supplies & materials</td><td class="num">$675.7B</td><td><span class="chip c-green">Observed</span></td><td>Raw materials + intermediates</td></tr>
+  <tr><td>Automotive vehicles, parts & engines</td><td class="num">$473.3B</td><td><span class="chip c-green">Observed</span></td><td>Mixed final vehicles and intermediate parts</td></tr>
+  <tr><td>Consumer goods</td><td class="num">$803.9B</td><td><span class="chip c-green">Observed</span></td><td>Primarily final goods</td></tr>
+  <tr><td>Foods, feeds & beverages</td><td class="num">$216.0B</td><td><span class="chip c-green">Observed</span></td><td>Mixed final + intermediate food inputs</td></tr>
+  <tr><td>Other goods</td><td class="num">$134.8B</td><td><span class="chip c-green">Observed</span></td><td>Unclassified residual</td></tr>
+ </tbody></table></div>
+</section>
+
+<section id="supplychain" class="pn">
+ <div class="note">These cards preserve the useful supply-chain logic while removing or qualifying claims the audit could not verify. “Observed,” “estimate,” and “interpretation” are kept separate.</div>
+ <div id="scCards" class="grid" style="margin-top:12px"></div>
+</section>
+
+<section id="methodology" class="pn">
+ <div class="grid g2">
+  <div class="box"><h3>Canonical project definitions</h3><table style="min-width:0"><tbody><tr><td>Goods imports</td><td><strong>Imports for consumption / Census basis</strong></td></tr><tr><td>Goods exports</td><td><strong>Domestic exports</strong> for production analysis</td></tr><tr><td>Macro cross-check</td><td>Total/BOP exports and imports</td></tr><tr><td>HHI</td><td>0–10,000 standard scale</td></tr><tr><td>Production-input share</td><td>Range, not false-precision point estimate</td></tr></tbody></table></div>
+  <div class="box"><h3>Confidence framework</h3><p class="muted" style="font-size:11px;line-height:1.6"><span class="chip c-green">High</span> direct official data or simple arithmetic from official data.<br><br><span class="chip c-amber">Medium</span> recognized concordance or modest modeling.<br><br><span class="chip c-red">Low / pending</span> substantial assumptions or third-party commodity data awaiting primary verification.</p></div>
+ </div>
+ <div class="box" style="margin-top:12px"><h3>Major audit corrections applied</h3><div class="table-wrap"><table><thead><tr><th>Item</th><th>Old</th><th>Audited / revised</th><th>Status</th></tr></thead><tbody>
+  <tr><td>Foods/feeds imports</td><td>$133B</td><td><strong>$216.0B</strong></td><td><span class="chip c-red">Material correction</span></td></tr>
+  <tr><td>Crude petroleum imports</td><td>$128B</td><td><strong>$167.5B</strong></td><td><span class="chip c-red">Material correction</span></td></tr>
+  <tr><td>Pharmaceutical preparations</td><td>$212.7B</td><td><strong>$245.0B</strong></td><td><span class="chip c-red">Material correction</span></td></tr>
+  <tr><td>Production-input share</td><td>67%</td><td><strong>50–57% defensible core range</strong></td><td><span class="chip c-amber">Methodology correction</span></td></tr>
+  <tr><td>HHI scale</td><td>0–30-ish hybrid</td><td><strong>0–10,000</strong></td><td><span class="chip c-amber">Standardized</span></td></tr>
+  <tr><td>Petroleum “gross processing margin”</td><td>Used</td><td><strong>Removed</strong></td><td><span class="chip c-red">Incorrect framing</span></td></tr>
+ </tbody></table></div></div>
+ <div class="box" style="margin-top:12px"><h3>Data still required before the next analytical layer</h3><ul class="muted" style="font-size:11px;line-height:1.8;margin:0;padding-left:18px"><li>Direct USA Trade Online / USITC pull for 2024 and 2025 HS-section imports and domestic exports.</li><li>Primary 2025 HS8541+8542 semiconductor import values and supplier shares.</li><li>HS3002 vs HS3003+3004 pharmaceutical split.</li><li>HS-level related-party data for automotive claims.</li><li>Port-adjustment methodology before treating state imports as state consumption/production.</li></ul></div>
+</section>
+
+<div class="footer">Built from the original U.S. Import Foundation HTML plus the completed audit text supplied by the user. 2024 audit corrections reflect the source notes in that audit. 2025 macro figures are from the BEA/Census December & Annual 2025 release; detailed 2025 HS tables are intentionally not fabricated.</div>
+</div>
+<script>
+const HS_SECTIONS=[
+{name:'Machines (HS84–85)',imp:1017.0,exp:451.9,src:'China / Mexico / Japan',status:'PROVISIONAL'},
+{name:'Transportation (HS86–89)',imp:428.4,exp:208.5,src:'Mexico / Canada / Japan',status:'PROVISIONAL'},
+{name:'Chemical Products (HS28–38)',imp:357.9,exp:246.6,src:'Ireland / China / India',status:'PROVISIONAL'},
+{name:'Mineral Products (HS25–27)',imp:262.0,exp:365.4,src:'Canada / Mexico / Saudi Arabia',status:'PROVISIONAL'},
+{name:'Metals (HS72–83)',imp:196.8,exp:87.1,src:'Canada / Mexico / China',status:'PROVISIONAL'},
+{name:'Instruments (HS90–92)',imp:124.8,exp:110.2,src:'China / Germany / Japan',status:'PROVISIONAL'},
+{name:'Textiles (HS50–63)',imp:124.6,exp:22.1,src:'China / Vietnam / India',status:'PROVISIONAL'},
+{name:'Plastics & Rubbers (HS39–40)',imp:118.3,exp:94.0,src:'China / Canada / Mexico',status:'PROVISIONAL'},
+{name:'Miscellaneous (HS94–96)',imp:117.6,exp:15.6,src:'China / Vietnam / Mexico',status:'PROVISIONAL'},
+{name:'Precious Metals (HS71)',imp:102.6,exp:53.3,src:'Switzerland / UAE / UK',status:'PROVISIONAL'},
+{name:'Foodstuffs (HS16–24)',imp:97.4,exp:60.6,src:'Mexico / Canada / China',status:'PROVISIONAL'},
+{name:'Vegetable Products (HS06–14)',imp:46.0,exp:74.6,src:'Mexico / Canada / China',status:'PROVISIONAL'},
+{name:'Footwear & Headwear (HS64–67)',imp:36.8,exp:1.8,src:'China / Vietnam / India',status:'PROVISIONAL'},
+{name:'Stone & Glass (HS68–70)',imp:32.4,exp:12.5,src:'China / Mexico / Canada',status:'PROVISIONAL'},
+{name:'Animal Products (HS01–05)',imp:31.8,exp:36.5,src:'Canada / Mexico / Chile',status:'PROVISIONAL'},
+{name:'Paper Goods (HS47–49)',imp:29.8,exp:27.7,src:'Canada / China / Germany',status:'PROVISIONAL'},
+{name:'Wood Products (HS44–46)',imp:24.1,exp:9.95,src:'Canada / China / Brazil',status:'PROVISIONAL'},
+{name:'Animal Hides (HS41–43)',imp:14.6,exp:2.6,src:'China / Vietnam / Italy',status:'PROVISIONAL'},
+{name:'Animal + Veg Bi-Products',imp:9.2,exp:2.7,src:'Canada / Malaysia / Indonesia',status:'PROVISIONAL'},
+{name:'Arts & Antiques (HS97)',imp:8.2,exp:6.7,src:'UK / France / China',status:'PROVISIONAL'},
+{name:'Weapons (HS93)',imp:4.1,exp:5.9,src:'Germany / Italy / Austria',status:'PROVISIONAL'}];
+
+const PRODUCTS=[
+{name:'Nuclear reactors & machinery (HS84)',imp:531.1,exp:245.0,src:'China 24%, Mexico 18%, Japan 7%',status:'Provisional HS84'},
+{name:'Electrical & electronic equipment (HS85)',imp:485.9,exp:206.9,src:'China 28%, Mexico 19%, Taiwan 9%',status:'Provisional'},
+{name:'Vehicles (HS87)',imp:391.5,exp:139.0,src:'Mexico 26%, Canada 20%, Japan 12%',status:'Provisional'},
+{name:'Pharmaceutical preparations',imp:245.0,exp:98.0,src:'Supplier split pending primary pull',status:'2024 import corrected; export provisional'},
+{name:'Crude petroleum (HS2709)',imp:167.5,exp:124.0,src:'Canada share pending Exhibit 16a verification',status:'2024 import corrected'},
+{name:'Mineral fuels & oils (HS27)',imp:251.1,exp:328.9,src:'Canada / Mexico / Saudi Arabia',status:'Provisional aggregate'},
+{name:'Auto parts & accessories (multi-code aggregation)',imp:181.0,exp:82.0,src:'Mexico / China / Canada',status:'Aggregation requires documentation'},
+{name:'Semiconductors (HS8541+8542 aggregate)',imp:116.3,exp:55.0,src:'Taiwan share not yet primary-verified',status:'Unverified aggregate'},
+{name:'Computers & accessories (HS8471+8473 aggregate)',imp:113.0,exp:42.0,src:'China / Mexico / Taiwan',status:'Unverified aggregate'},
+{name:'Optical & medical instruments (HS90)',imp:124.8,exp:84.0,src:'China / Germany / Japan',status:'Provisional'},
+{name:'Precious metals & stones (HS71)',imp:87.2,exp:49.8,src:'Switzerland / UAE / UK',status:'Provisional'},
+{name:'Plastics (HS39)',imp:78.2,exp:55.0,src:'China / Canada / Germany',status:'Provisional'},
+{name:'Furniture & bedding (HS94)',imp:72.6,exp:5.2,src:'China / Vietnam / Mexico',status:'Provisional'},
+{name:'Organic chemicals (HS29)',imp:71.1,exp:32.0,src:'Ireland / China / Germany',status:'Provisional'},
+{name:'Iron & steel articles (HS73)',imp:52.7,exp:18.0,src:'Canada / Mexico / China',status:'Provisional'},
+{name:'Apparel, knit (HS61)',imp:47.4,exp:1.8,src:'China / Vietnam / Bangladesh',status:'Provisional'},
+{name:'Toys & games (HS95)',imp:43.4,exp:4.8,src:'China / Vietnam / Mexico',status:'Provisional'},
+{name:'Aircraft & spacecraft (HS88)',imp:35.9,exp:130.0,src:'France / Germany / Canada',status:'Provisional'},
+{name:'Gas turbines (HS8411)',imp:8.0,exp:52.2,src:'UK / Germany / Canada',status:'Provisional'},
+{name:'Vaccines & blood products (HS3002)',imp:45.0,exp:51.3,src:'Germany / UK / Belgium',status:'Needs primary verification'},
+{name:'Soybeans (HS1201)',imp:.4,exp:24.5,src:'Canada (imports trivial)',status:'Approximation'},
+{name:'Lithium-ion batteries (part of HS8507)',imp:18.0,exp:2.8,src:'China / South Korea / Japan',status:'Needs HS6 verification'}];
+
+const HHI=[
+{sec:'Footwear & Headwear',hhi:2892,top:'China 48%, Vietnam 18%, India 8%',note:'High concentration; vulnerability depends on substitution.'},
+{sec:'Miscellaneous',hhi:2500,top:'China 42%, Vietnam 14%, Mexico 8%',note:'Approximate from displayed top shares; primary pull pending.'},
+{sec:'Animal Hides',hhi:2400,top:'China 32%, Vietnam 18%, Italy 12%',note:'Approximate; primary pull pending.'},
+{sec:'Precious Metals',hhi:2200,top:'Switzerland 22%, UAE 15%, UK 10%',note:'Financial/gold flows complicate interpretation.'},
+{sec:'Textiles',hhi:1900,top:'China 28%, Vietnam 16%, India 12%',note:'Moderate concentration.'},
+{sec:'Machines',hhi:840,top:'China 24%, Mexico 18%, Japan 7%',note:'Low concentration at broad section level.'},
+{sec:'Metals',hhi:680,top:'Canada 14%, Mexico 12%, China 9%',note:'Low concentration.'}];
+
+const SC=[
+{title:'Semiconductors → U.S. electronics & automotive production',tone:'blue',input:'2024 import value shown as $116.3B for HS8541+8542 aggregate — pending primary Census/USITC verification.',flow:'Foreign fabrication → imported chips/components → U.S. electronics, data-center, machinery and vehicle systems → domestic use and exports.',evidence:'The supply-chain structure is analytically sound; exact Taiwan share and disruption timing remain unverified in the current file.',risk:'Treat supplier concentration as a hypothesis until the primary HS-country pull is complete.'},
+{title:'Crude petroleum → U.S. refining → fuels and petrochemicals',tone:'red',input:'2024 crude-oil imports corrected to $167.5B from FT-900 Exhibit 7.',flow:'Imported crude + domestic crude → U.S. refineries → gasoline, diesel, jet fuel and petrochemical feedstocks → domestic use and exports.',evidence:'The United States can import crude while exporting refined petroleum because refinery configuration and crude grades differ.',risk:'The prior “gross processing margin” claim was removed; trade-value differences are not refinery margin or profit.'},
+{title:'Auto parts → U.S. assembly → domestic sale and export',tone:'green',input:'2024 automotive imports were $473.3B in the broad FT-900 category. The old $181B parts figure is a multi-code aggregation and remains provisional.',flow:'Foreign parts/components → U.S. vehicle and powertrain assembly → finished vehicles and components → U.S. market and export markets.',evidence:'USMCA deeply integrates North American production, but exact related-party and border-crossing claims require primary sourcing.',risk:'Do not treat high Mexico share as automatic vulnerability; regional integration and substitutability matter.'},
+{title:'Pharmaceutical inputs → U.S. pharma production',tone:'amber',input:'2024 pharmaceutical preparations corrected to $245.0B. API-only values require HS-level decomposition and are not yet verified.',flow:'Imported APIs/chemical intermediates + domestic R&D/manufacturing → finished medicines and biologics → domestic healthcare use and exports.',evidence:'The broad dependency structure is plausible, but India/China API/precursor shares must be sourced directly before publication.',risk:'Remove unsupported “80% precursor” claims until a citable primary source is added.'},
+{title:'Industrial machinery → U.S. productive capacity',tone:'purple',input:'Capital-goods imports were $960.3B in 2024 and rose by roughly $165.9B in 2025 on a BOP/end-use basis.',flow:'Imported machine tools, computers, robotics and production equipment → investment in U.S. plants and productive capacity.',evidence:'Capital-goods imports are investment as well as imports; they can raise domestic productive capability rather than simply displace it.',risk:'Supplier dependence should be evaluated at specific equipment/product level, not at the entire HS84 section.'}];
+
+function sw(id){document.querySelectorAll('.pn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tb').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));document.getElementById(id).classList.add('active'); if(id==='sectors')renderSectors(); if(id==='products')renderProducts(); if(id==='countries')renderHHI(); if(id==='enduse')renderEndUse(); if(id==='supplychain')renderSC();}
+document.querySelectorAll('.tb').forEach(b=>b.addEventListener('click',()=>sw(b.dataset.tab)));
+function money(v){return '$'+(v>=1000?(v/1000).toFixed(2)+'T':v.toFixed(1)+'B')}
+function renderSectors(){let q=secSearch.value.toLowerCase(),sort=secSort.value,fil=secFilter.value;let d=HS_SECTIONS.filter(x=>x.name.toLowerCase().includes(q));if(fil==='deficit')d=d.filter(x=>x.imp>x.exp);if(fil==='surplus')d=d.filter(x=>x.exp>x.imp);d.sort((a,b)=>sort==='exp'?b.exp-a.exp:sort==='bal'?(a.exp-a.imp)-(b.exp-b.imp):sort==='ratio'?(b.imp/b.exp)-(a.imp/a.exp):b.imp-a.imp);sectorTable.innerHTML='<table><thead><tr><th>HS Section</th><th class="num">Imports</th><th class="num">Exports</th><th class="num">Balance</th><th class="num">I/E</th><th>Top sources</th><th>Status</th></tr></thead><tbody>'+d.map(x=>{let bal=x.exp-x.imp,ratio=x.imp/x.exp;return `<tr><td><strong>${x.name}</strong></td><td class="num">${money(x.imp)}</td><td class="num">${money(x.exp)}</td><td class="num" style="color:${bal<0?'var(--red)':'var(--blue)'}">${bal>=0?'+':''}${bal.toFixed(1)}B</td><td class="num">${ratio.toFixed(2)}×</td><td>${x.src}</td><td><span class="chip c-amber">${x.status}</span></td></tr>`}).join('')+'</tbody></table>';let top=d.slice(0,10); if(window.secC)secC.destroy();window.secC=new Chart(document.getElementById('sectorChart'),{type:'bar',data:{labels:top.map(x=>x.name),datasets:[{label:'Imports',data:top.map(x=>x.imp),backgroundColor:'#b3353588',borderColor:'#b33535',borderWidth:1},{label:'Exports',data:top.map(x=>x.exp),backgroundColor:'#1f5aa688',borderColor:'#1f5aa6',borderWidth:1}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:10}}},scales:{x:{ticks:{callback:v=>'$'+v+'B'}}}}});}
+function renderProducts(){let q=prodSearch.value.toLowerCase(),fil=prodFilter.value,sort=prodSort.value;let d=PRODUCTS.filter(x=>x.name.toLowerCase().includes(q));if(fil==='import-dep')d=d.filter(x=>x.imp/Math.max(.1,x.exp)>3);if(fil==='export-str')d=d.filter(x=>x.exp>x.imp);if(fil==='two-way')d=d.filter(x=>x.imp/x.exp<=2&&x.exp/x.imp<=2);d.sort((a,b)=>sort==='bal'?(a.exp-a.imp)-(b.exp-b.imp):sort==='ratio'?(b.imp/b.exp)-(a.imp/a.exp):b.imp-a.imp);productTable.innerHTML='<table><thead><tr><th>Product</th><th class="num">Imports</th><th class="num">Exports</th><th class="num">Balance</th><th class="num">I/E</th><th>Top source / note</th><th>Audit status</th></tr></thead><tbody>'+d.map(x=>{let bal=x.exp-x.imp,r=x.imp/Math.max(.1,x.exp);let cl=r>3?'c-red':r<.5?'c-blue':'c-gray';return `<tr><td><strong>${x.name}</strong></td><td class="num">${money(x.imp)}</td><td class="num">${money(x.exp)}</td><td class="num" style="color:${bal<0?'var(--red)':'var(--blue)'}">${bal>=0?'+':''}${bal.toFixed(1)}B</td><td class="num"><span class="chip ${cl}">${r.toFixed(2)}×</span></td><td>${x.src}</td><td>${x.status}</td></tr>`}).join('')+'</tbody></table>';}
+function renderHHI(){hhiTable.innerHTML='<table><thead><tr><th>Section</th><th class="num">HHI</th><th>Band</th><th>Top suppliers shown</th><th>Context</th></tr></thead><tbody>'+HHI.map(x=>{let band=x.hhi>2500?'High':x.hhi>=1500?'Moderate':'Low',cl=x.hhi>2500?'c-red':x.hhi>=1500?'c-amber':'c-blue';return `<tr><td><strong>${x.sec}</strong></td><td class="num">${x.hhi.toLocaleString()}</td><td><span class="chip ${cl}">${band}</span></td><td>${x.top}</td><td>${x.note}</td></tr>`}).join('')+'</tbody></table>';}
+function renderEndUse(){if(window.euC)return;window.euC=new Chart(document.getElementById('endUseChart'),{type:'doughnut',data:{labels:['Capital goods','Consumer goods','Industrial supplies','Automotive','Foods/feeds','Other'],datasets:[{data:[960.3,803.9,675.7,473.3,216.0,134.8],backgroundColor:['#1f5aa6','#94651d','#b33535','#16705c','#6a8d32','#9aa4b1'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{boxWidth:10}},tooltip:{callbacks:{label:c=>`${c.label}: $${c.raw}B`}}}}});}
+function renderSC(){scCards.innerHTML=SC.map(x=>`<div class="box" style="border-left:4px solid ${x.tone==='blue'?'var(--blue)':x.tone==='red'?'var(--red)':x.tone==='green'?'var(--green)':x.tone==='amber'?'var(--amber)':'var(--purple)'}"><h3>${x.title}</h3><p class="muted" style="font-size:11px;line-height:1.65"><strong>Input data:</strong> ${x.input}</p><p class="muted" style="font-size:11px;line-height:1.65"><strong>Flow:</strong> ${x.flow}</p><p class="muted" style="font-size:11px;line-height:1.65"><strong>Evidence:</strong> ${x.evidence}</p><div class="note warn"><strong>Risk / caveat:</strong> ${x.risk}</div></div>`).join('')}
+new Chart(document.getElementById('overviewChart'),{type:'bar',data:{labels:['Capital','Consumer','Industrial supplies','Automotive','Foods/feeds','Other'],datasets:[{label:'2024 imports',data:[960.3,803.9,675.7,473.3,216.0,134.8],backgroundColor:'#b3353588',borderColor:'#b33535',borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+v+'B'}}}}});
+new Chart(document.getElementById('y2025Chart'),{type:'bar',data:{labels:['Goods exports','Goods imports','Services exports','Services imports'],datasets:[{label:'2025 BOP basis',data:[2197.5,3438.4,1234.9,895.4],backgroundColor:['#1f5aa688','#b3353588','#16705c88','#94651d88'],borderColor:['#1f5aa6','#b33535','#16705c','#94651d'],borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+v+'B'}}}}});
+secSearch?.addEventListener('input',renderSectors);secSort?.addEventListener('change',renderSectors);secFilter?.addEventListener('change',renderSectors);prodSearch?.addEventListener('input',renderProducts);prodSort?.addEventListener('change',renderProducts);prodFilter?.addEventListener('change',renderProducts);
+</script>
+</body></html>
