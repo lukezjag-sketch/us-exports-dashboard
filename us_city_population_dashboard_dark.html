@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U.S. Metro Population Explorer</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#0b0f14; --panel:#111821; --panel2:#151e29; --text:#eef3f8; --muted:#93a3b5;
+  --line:#243241; --accent:#4da3ff; --accent2:#7cc4ff; --green:#5bd6a0; --gold:#f5c66a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,#091018 0%,#0b0f14 32%);color:var(--text);
+font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+.wrap{max-width:1180px;margin:0 auto;padding:30px 22px 56px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent2);font-weight:700}
+h1{font-size:clamp(28px,4vw,46px);line-height:1.05;margin:8px 0 10px;letter-spacing:-.03em}
+.sub{max-width:850px;color:var(--muted);font-size:14px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
+.card{background:rgba(17,24,33,.92);border:1px solid var(--line);border-radius:14px;padding:16px 17px;box-shadow:0 10px 30px rgba(0,0,0,.16)}
+.label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.value{font-size:24px;font-weight:750;margin-top:5px}
+.small{font-size:11px;color:var(--muted);margin-top:3px}
+.panel{background:rgba(17,24,33,.9);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:14px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+input,select{background:#0d141c;color:var(--text);border:1px solid #2a3a4a;border-radius:9px;padding:9px 11px;font-size:13px}
+input{min-width:260px;flex:1}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;min-width:700px}
+th{font-size:11px;color:#a9bacb;text-transform:uppercase;letter-spacing:.07em;text-align:left;background:#0f1620;
+padding:11px 12px;border-bottom:1px solid var(--line);position:sticky;top:0}
+td{padding:11px 12px;border-bottom:1px solid #1e2a36;font-size:13px}
+tr:hover td{background:#121d28}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.rank{color:var(--muted);width:58px}
+.barcell{min-width:180px}
+.bartrack{height:7px;border-radius:999px;background:#202d39;overflow:hidden}
+.bar{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.chartbox{height:430px}
+.note{margin-top:13px;padding:12px 14px;border-left:3px solid var(--gold);background:#141b22;color:#b9c5d1;
+font-size:12px;line-height:1.55;border-radius:8px}
+.footer{margin-top:18px;color:#6f8192;font-size:11px;line-height:1.6}
+@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.chartbox{height:520px}}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.wrap{padding:22px 12px 44px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Population geography · interactive companion</div>
+  <h1>U.S. Metro Population Explorer</h1>
+  <div class="sub">Interactive version of the metro / combined statistical area population table in the project notes. Search, sort, and compare the 69 listed urban regions.</div>
+
+  <div class="grid">
+    <div class="card"><div class="label">Listed regions</div><div class="value">69</div><div class="small">Metro / CSA-style entries</div></div>
+    <div class="card"><div class="label">Combined listed population</div><div class="value">241.0M</div><div class="small">Sum of the values shown</div></div>
+    <div class="card"><div class="label">Largest region</div><div class="value">22.0M</div><div class="small">New York–Newark–Jersey City</div></div>
+    <div class="card"><div class="label">Top 10 share</div><div class="value">44.4%</div><div class="small">Share of listed population</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="toolbar">
+      <input id="search" type="text" placeholder="Search metro / region…">
+      <select id="sort">
+        <option value="rank">Sort: original rank</option>
+        <option value="popdesc">Population: high → low</option>
+        <option value="popasc">Population: low → high</option>
+        <option value="name">Name: A → Z</option>
+      </select>
+      <select id="filter">
+        <option value="all">All population sizes</option>
+        <option value="10m">10M+</option>
+        <option value="5m">5M–9.99M</option>
+        <option value="2m">2M–4.99M</option>
+        <option value="1m">1M–1.99M</option>
+        <option value="lt1m">Under 1M</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Rank</th><th>Metro / Region</th><th class="num">Population</th><th>Relative size</th><th class="num">Share of listed total</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div style="font-size:14px;font-weight:700;margin-bottom:4px">Population ranking</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Top 25 currently matching the table filters.</div>
+    <div class="chartbox"><canvas id="chart"></canvas></div>
+  </div>
+
+  <div class="note"><strong>Scope note:</strong> This visualization preserves the approximate populations and region labels from the source document. The list mixes Combined Statistical Areas, metro-area labels, corridors, and two transnational metro concepts, so it should be treated as a project comparison table rather than a single official Census geographic classification.</div>
+  <div class="footer">Source: project population table supplied by the author. Approximate values shown as originally recorded.</div>
+</div>
+
+<script>
+const DATA = [{"rank": 1, "name": "New York-Newark-Jersey City (Tri-State Area)", "population": 22000000}, {"rank": 2, "name": "Los Angeles Greater", "population": 18000000}, {"rank": 3, "name": "Washington-Baltimore (DMV)", "population": 10000000}, {"rank": 4, "name": "Chicagoland Metro", "population": 9800000}, {"rank": 5, "name": "DFW (Dallas-Fortworth)", "population": 8500000}, {"rank": 6, "name": "Greater Boston", "population": 8500000}, {"rank": 7, "name": "Greater Houston", "population": 7800000}, {"rank": 8, "name": "San Francisco Bay Area", "population": 7700000}, {"rank": 9, "name": "Philadelphia (Delaware Valley)", "population": 7300000}, {"rank": 10, "name": "Miami Metro Area", "population": 7300000}, {"rank": 11, "name": "Metro Atlanta", "population": 6800000}, {"rank": 12, "name": "San Diego-Tijuana Transnational Metro Area", "population": 5400000}, {"rank": 13, "name": "Metro Detroit", "population": 5400000}, {"rank": 14, "name": "Front Range Corridor (Denver)", "population": 5300000}, {"rank": 15, "name": "Valley of the Sun (Phoenix)", "population": 5200000}, {"rank": 16, "name": "Puget Sound (Seattle)", "population": 5100000}, {"rank": 17, "name": "Orlando Metro Area", "population": 4600000}, {"rank": 18, "name": "Twin Cities (Minneapolis-St. Paul)", "population": 4200000}, {"rank": 19, "name": "Cleveland", "population": 3700000}, {"rank": 20, "name": "Tampa Bay Area", "population": 3400000}, {"rank": 21, "name": "Metrolina (Charlotte)", "population": 3400000}, {"rank": 22, "name": "Greater Portland", "population": 3300000}, {"rank": 23, "name": "Greater St. Louis", "population": 2900000}, {"rank": 24, "name": "Salt Lake City (Wasatch Front)", "population": 2900000}, {"rank": 25, "name": "Greater San Antonio", "population": 2800000}, {"rank": 26, "name": "Sacramento", "population": 2700000}, {"rank": 27, "name": "Columbus", "population": 2700000}, {"rank": 28, "name": "Indianapolis", "population": 2700000}, {"rank": 29, "name": "Pittsburgh", "population": 2700000}, {"rank": 30, "name": "Hartford", "population": 2700000}, {"rank": 31, "name": "Greater Kansas City", "population": 2600000}, {"rank": 32, "name": "Austin", "population": 2500000}, {"rank": 33, "name": "Las Vegas", "population": 2400000}, {"rank": 34, "name": "Nashville", "population": 2400000}, {"rank": 35, "name": "Raleigh (Research Triangle)", "population": 2400000}, {"rank": 36, "name": "San Juan", "population": 2300000}, {"rank": 37, "name": "Cincinnati", "population": 2300000}, {"rank": 38, "name": "Milwaukee", "population": 2000000}, {"rank": 39, "name": "Hampton Roads (Norfolk)", "population": 1900000}, {"rank": 40, "name": "Jacksonville", "population": 1900000}, {"rank": 41, "name": "Piedmont Triad (Winston-Salem)", "population": 1700000}, {"rank": 42, "name": "Greenville", "population": 1600000}, {"rank": 43, "name": "Oklahoma City", "population": 1500000}, {"rank": 44, "name": "Louisville", "population": 1500000}, {"rank": 45, "name": "Grand Rapids", "population": 1500000}, {"rank": 46, "name": "Brownsville-Matamoros Transnational Metro Area", "population": 1500000}, {"rank": 47, "name": "Memphis", "population": 1300000}, {"rank": 48, "name": "New Orleans", "population": 1300000}, {"rank": 49, "name": "Richmond", "population": 1300000}, {"rank": 50, "name": "Fresno", "population": 1300000}, {"rank": 51, "name": "Birmingham", "population": 1300000}, {"rank": 52, "name": "Buffalo", "population": 1200000}, {"rank": 53, "name": "Albany", "population": 1200000}, {"rank": 54, "name": "Knoxville", "population": 1200000}, {"rank": 55, "name": "El Paso (Borderplex)", "population": 1100000}, {"rank": 56, "name": "Tucson", "population": 1100000}, {"rank": 57, "name": "Albuquerque-Santa Fe", "population": 1100000}, {"rank": 58, "name": "Rochester", "population": 1000000}, {"rank": 59, "name": "Omaha", "population": 1000000}, {"rank": 60, "name": "Tulsa", "population": 1000000}, {"rank": 61, "name": "Honolulu", "population": 1000000}, {"rank": 62, "name": "Des Moines", "population": 900000}, {"rank": 63, "name": "Bakersfield", "population": 900000}, {"rank": 64, "name": "McAllen", "population": 900000}, {"rank": 65, "name": "Little Rock", "population": 900000}, {"rank": 66, "name": "Charleston", "population": 870000}, {"rank": 67, "name": "Baton Rouge", "population": 800000}, {"rank": 68, "name": "Colorado Springs", "population": 780000}, {"rank": 69, "name": "Stockton", "population": 779000}];
+const total = DATA.reduce((a,d)=>a+d.population,0);
+const maxPop = Math.max(...DATA.map(d=>d.population));
+let chart;
+
+function fmtPop(v) {
+  if(v>=1000000) return (v/1000000).toFixed(v%1000000===0?1:2).replace(/0$/,'')+'M';
+  return (v/1000).toFixed(0)+'K';
+}
+function matchesFilter(d,f){
+  if(f==='10m') return d.population>=10000000;
+  if(f==='5m') return d.population>=5000000 && d.population<10000000;
+  if(f==='2m') return d.population>=2000000 && d.population<5000000;
+  if(f==='1m') return d.population>=1000000 && d.population<2000000;
+  if(f==='lt1m') return d.population<1000000;
+  return true;
+}
+function currentData(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  const f=document.getElementById('filter').value;
+  const s=document.getElementById('sort').value;
+  let rows=DATA.filter(d=>(!q || d.name.toLowerCase().includes(q)) && matchesFilter(d,f));
+  if(s==='popdesc') rows.sort((a,b)=>b.population-a.population);
+  else if(s==='popasc') rows.sort((a,b)=>a.population-b.population);
+  else if(s==='name') rows.sort((a,b)=>a.name.localeCompare(b.name));
+  else rows.sort((a,b)=>a.rank-b.rank);
+  return rows;
+}
+function render(){
+  const rows=currentData();
+  document.getElementById('tbody').innerHTML = rows.map(d=>`
+    <tr>
+      <td class="rank">#${d.rank}</td>
+      <td><strong>${d.name}</strong></td>
+      <td class="num">${fmtPop(d.population)}</td>
+      <td class="barcell"><div class="bartrack"><div class="bar" style="width:${(d.population/maxPop*100).toFixed(1)}%"></div></div></td>
+      <td class="num">${(d.population/total*100).toFixed(2)}%</td>
+    </tr>`).join('');
+
+  const top=rows.slice(0,25);
+  if(chart) chart.destroy();
+  chart = new Chart(document.getElementById('chart'), {
+    type:'bar',
+    data:{
+      labels:top.map(d=>d.name),
+      datasets:[{label:'Population',data:top.map(d=>d.population/1e6),
+        backgroundColor:'rgba(77,163,255,.62)',borderColor:'#4da3ff',borderWidth:1,borderRadius:4}]
+    },
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.raw.toFixed(2).replace(/0+$/,'').replace(/\.$/,'')+'M'}}},
+      scales:{
+        x:{ticks:{color:'#93a3b5',callback:v=>v+'M'},grid:{color:'rgba(147,163,181,.12)'}},
+        y:{ticks:{color:'#c6d2dd',font:{size:10}},grid:{display:false}}
+      }
+    }
+  });
+}
+['search','sort','filter'].forEach(id=>document.getElementById(id).addEventListener(id==='search'?'input':'change',render));
+render();
+</script>
+</body>
+</html>
