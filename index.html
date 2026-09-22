@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U.S. Trade & Production Research</title>
+
+<style>
+:root {
+  --bg:#0b1020;
+  --panel:#121a2b;
+  --panel2:#182238;
+  --text:#edf3ff;
+  --muted:#9eabc2;
+  --border:#2a3852;
+  --blue:#68a7ff;
+  --green:#62d3b3;
+  --amber:#f0bd69;
+  --purple:#a694ff;
+  --shadow:0 10px 34px rgba(0,0,0,.34);
+  --radius:14px;
+  --font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+* { box-sizing:border-box; }
+
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font);
+}
+
+.wrap {
+  max-width:1240px;
+  margin:0 auto;
+  padding:28px 20px 54px;
+}
+
+.hero {
+  background:linear-gradient(135deg,#111a2c,#172945 68%,#214472);
+  border-radius:20px;
+  padding:42px 38px;
+  box-shadow:var(--shadow);
+  margin-bottom:28px;
+}
+
+.kicker {
+  font-size:12px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  opacity:.72;
+}
+
+.hero h1 {
+  margin:8px 0 12px;
+  font-size:38px;
+  line-height:1.1;
+}
+
+.hero p {
+  margin:0;
+  max-width:850px;
+  color:#c9d6ea;
+  line-height:1.7;
+  font-size:15px;
+}
+
+.badges {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:20px;
+}
+
+.badge {
+  font-size:11px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.18);
+}
+
+.section-title {
+  margin:30px 0 8px;
+  font-size:21px;
+}
+
+.section-copy {
+  color:var(--muted);
+  line-height:1.65;
+  max-width:850px;
+  margin-bottom:16px;
+}
+
+.grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+
+.card {
+  display:flex;
+  flex-direction:column;
+  min-height:245px;
+  padding:22px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  text-decoration:none;
+  color:var(--text);
+  transition:transform .18s ease,border-color .18s ease,background .18s ease;
+}
+
+.card:hover {
+  transform:translateY(-3px);
+  background:#162238;
+  border-color:#46658f;
+}
+
+.card-top {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:18px;
+}
+
+.card-label {
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+}
+
+.arrow {
+  font-size:20px;
+  color:var(--muted);
+}
+
+.card h2 {
+  font-size:21px;
+  margin:0 0 9px;
+}
+
+.card p {
+  margin:0;
+  color:var(--muted);
+  line-height:1.6;
+  font-size:13px;
+}
+
+.stats {
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:auto;
+  padding-top:20px;
+}
+
+.stat {
+  font-size:10px;
+  padding:5px 8px;
+  background:#0f1727;
+  border:1px solid var(--border);
+  border-radius:7px;
+  color:#c7d2e6;
+}
+
+.blue { color:var(--blue); }
+.green { color:var(--green); }
+.amber { color:var(--amber); }
+.purple { color:var(--purple); }
+
+.about {
+  margin-top:14px;
+  padding:24px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+}
+
+.about p {
+  color:var(--muted);
+  line-height:1.75;
+  font-size:13px;
+  max-width:1000px;
+}
+
+.method {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-top:16px;
+}
+
+.method-box {
+  padding:15px;
+  border-radius:10px;
+  background:#101827;
+  border:1px solid var(--border);
+}
+
+.method-box strong {
+  display:block;
+  font-size:12px;
+  margin-bottom:6px;
+}
+
+.method-box span {
+  font-size:11px;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+.footer {
+  margin-top:30px;
+  padding-top:18px;
+  border-top:1px solid var(--border);
+  color:var(--muted);
+  font-size:11px;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.footer a {
+  color:var(--blue);
+  text-decoration:none;
+}
+
+@media(max-width:800px) {
+  .grid { grid-template-columns:1fr; }
+  .method { grid-template-columns:1fr; }
+  .hero { padding:30px 24px; }
+  .hero h1 { font-size:30px; }
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<section class="hero">
+  <div class="kicker">Independent Research Project</div>
+
+  <h1>U.S. Trade & Production Analysis</h1>
+
+  <p>
+    An interactive research project exploring how international trade connects
+    with the physical U.S. economy — what the country produces, imports and
+    exports, where economic activity is concentrated, and how industries connect
+    through domestic and international supply chains.
+  </p>
+
+  <div class="badges">
+    <span class="badge">International Trade</span>
+    <span class="badge">Supply Chains</span>
+    <span class="badge">Economic Data</span>
+    <span class="badge">Interactive Analysis</span>
+    <span class="badge">Data Auditing</span>
+  </div>
+</section>
+
+
+<h2 class="section-title">Explore the Research</h2>
+
+<p class="section-copy">
+  The project is organized into several connected analytical tools covering
+  exports, imports, domestic production and regional economic activity.
+</p>
+
+
+<div class="grid">
+
+<a class="card" href="./exports/">
+  <div class="card-top">
+    <span class="card-label blue">Exports</span>
+    <span class="arrow">→</span>
+  </div>
+
+  <h2>U.S. Export Analysis</h2>
+
+  <p>
+    Explore U.S. domestic goods exports across industries and products,
+    including sector composition, product concentration, HHI measures,
+    mega-region comparisons and anomaly detection.
+  </p>
+
+  <div class="stats">
+    <span class="stat">2024</span>
+    <span class="stat">≈ $1.896T</span>
+    <span class="stat">21 HS Sections</span>
+    <span class="stat">1,222 Products</span>
+  </div>
+</a>
+
+
+<a class="card" href="./imports/">
+  <div class="card-top">
+    <span class="card-label green">Imports</span>
+    <span class="arrow">→</span>
+  </div>
+
+  <h2>U.S. Import Foundation</h2>
+
+  <p>
+    An audited import research dashboard separating observed statistics,
+    modeled estimates and provisional data while examining products,
+    supplier concentration, end-use categories and supply-chain flows.
+  </p>
+
+  <div class="stats">
+    <span class="stat">2024 Audited Base</span>
+    <span class="stat">2025 Update</span>
+    <span class="stat">HHI</span>
+    <span class="stat">Supply-Chain Flows</span>
+  </div>
+</a>
+
+
+<a class="card" href="./tradable_production_flow_system.html">
+  <div class="card-top">
+    <span class="card-label amber">Production</span>
+    <span class="arrow">→</span>
+  </div>
+
+  <h2>Tradable Production Flow</h2>
+
+  <p>
+    A state-level analytical model connecting economic output with international
+    trade, including estimated tradable production, exports, export intensity
+    and production-flow relationships.
+  </p>
+
+  <div class="stats">
+    <span class="stat">50 States</span>
+    <span class="stat">State GDP</span>
+    <span class="stat">Tradable GDP</span>
+    <span class="stat">Export Intensity</span>
+  </div>
+</a>
+
+
+<a class="card" href="./us_city_population_dashboard_dark.html">
+  <div class="card-top">
+    <span class="card-label purple">Population</span>
+    <span class="arrow">→</span>
+  </div>
+
+  <h2>U.S. Regional Population Explorer</h2>
+
+  <p>
+    An interactive comparison of major U.S. urban regions and population
+    patterns designed to provide geographic context alongside the trade
+    and production research.
+  </p>
+
+  <div class="stats">
+    <span class="stat">69 Regions</span>
+    <span class="stat">Metro Comparisons</span>
+    <span class="stat">Regional Analysis</span>
+  </div>
+</a>
+
+</div>
+
+
+<h2 class="section-title">About the Project</h2>
+
+<div class="about">
+
+<p>
+  I built this project out of an interest in supply chains, logistics,
+  international trade, technology and data analysis. What started as an
+  investigation of U.S. exports developed into a broader attempt to understand
+  how trade statistics relate to domestic production and the movement of goods
+  through the economy.
+</p>
+
+<p>
+  A major part of the work has involved reconciling datasets and definitions,
+  checking assumptions, revising calculations when stronger information became
+  available, and distinguishing official observations from modeled estimates.
+  The project is continuing to evolve as additional data is verified and the
+  analytical framework is refined.
+</p>
+
+<div class="method">
+
+  <div class="method-box">
+    <strong>Data Analysis</strong>
+    <span>
+      Organizing large trade and economic datasets into comparable industries,
+      products and geographic categories.
+    </span>
+  </div>
+
+  <div class="method-box">
+    <strong>Audit & Validation</strong>
+    <span>
+      Reviewing definitions, identifying inconsistencies and separating
+      observed statistics from estimates and provisional values.
+    </span>
+  </div>
+
+  <div class="method-box">
+    <strong>Interactive Research</strong>
+    <span>
+      Turning the analysis into browser-based tools that make economic
+      relationships easier to explore and understand.
+    </span>
+  </div>
+
+</div>
+</div>
+
+
+<div class="footer">
+  <span>U.S. Trade & Production Research Project</span>
+
+  <span>
+    <a href="https://github.com/lukezjag-sketch/us-exports-dashboard">
+      View source on GitHub
+    </a>
+  </span>
+</div>
+
+</div>
+</body>
+</html>
